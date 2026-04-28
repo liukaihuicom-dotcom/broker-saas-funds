@@ -659,6 +659,77 @@
       margin-top: 0;
     }
 
+    .upload-card {
+      width: 100%;
+      min-height: 150px;
+      padding: 18px;
+      border: 1px dashed var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--ink);
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 10px;
+      text-align: center;
+    }
+
+    .upload-card b {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 2px;
+      background: var(--ink);
+      color: var(--app);
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .upload-card strong {
+      display: block;
+      font-size: 14px;
+      font-weight: 860;
+    }
+
+    .upload-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 760;
+    }
+
+    .upload-card.active {
+      border-style: solid;
+      border-color: var(--active-border);
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 104px;
+      z-index: 90;
+      min-width: 220px;
+      max-width: min(340px, calc(100vw - 44px));
+      padding: 12px 14px;
+      border-radius: var(--radius);
+      background: var(--ink);
+      color: var(--app);
+      box-shadow: var(--shadow);
+      font-size: 13px;
+      font-weight: 820;
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 12px);
+      transition: opacity .18s ease, transform .18s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
     .secondary {
       width: 100%;
       min-height: 46px;
@@ -979,8 +1050,9 @@
 
     @media (max-width: 760px) {
       .stage {
-        padding: 12px 10px 266px;
+        padding: 12px 10px;
         align-items: start;
+        gap: 12px;
       }
 
       .device {
@@ -993,16 +1065,14 @@
       }
 
       .app {
-        height: calc(100vh - 278px);
-        min-height: 560px;
+        height: calc(100vh - 24px);
+        min-height: 620px;
         border-radius: 0 0 18px 18px;
       }
 
       .control-panel {
-        left: 12px;
-        right: 12px;
-        bottom: 12px;
-        width: auto;
+        position: static;
+        width: min(430px, 100%);
       }
     }
   </style>
@@ -1016,12 +1086,12 @@
           <span>5G 100%</span>
         </div>
         <header class="appbar">
-          <button class="icon-btn" type="button" aria-label="返回">‹</button>
+          <button class="icon-btn" id="backButton" type="button" aria-label="返回">‹</button>
           <div class="title">
             <strong id="screenTitle">资金总览</strong>
             <span id="roleChip">Trader</span>
           </div>
-          <button class="icon-btn" type="button" aria-label="消息">•</button>
+          <button class="icon-btn" id="messageButton" type="button" aria-label="消息">•</button>
         </header>
         <div class="content" id="screen"></div>
         <div class="flow-action" id="flowAction"></div>
@@ -1067,6 +1137,7 @@
       </div>
       <div class="control-actions" id="roleButtons"></div>
     </aside>
+    <div class="toast" id="toast"></div>
     <div class="drawer-backdrop" id="drawerBackdrop"></div>
     <section class="drawer" id="bottomDrawer" aria-modal="true" aria-label="底部选择器">
       <div class="drawer-handle"></div>
@@ -1088,12 +1159,18 @@
       depositAccount: null,
       depositAmount: 5000,
       depositChannel: null,
+      depositStep: 1,
+      depositProof: false,
       withdrawEntry: "home",
       withdrawAccount: null,
       withdrawAmount: 12000,
       withdrawMethod: null,
+      transferType: "trading",
+      transferAmount: 8000,
+      transferTo: null,
       accountMode: "multiple",
-      activeDrawer: null
+      activeDrawer: null,
+      toast: ""
     };
 
     const roles = {
@@ -1197,6 +1274,10 @@
     const bottomDrawer = document.querySelector("#bottomDrawer");
     const drawerTitle = document.querySelector("#drawerTitle");
     const drawerList = document.querySelector("#drawerList");
+    const toast = document.querySelector("#toast");
+    const backButton = document.querySelector("#backButton");
+    const messageButton = document.querySelector("#messageButton");
+    let toastTimer = null;
 
     function t(zh, en) {
       return appState.lang === "zh" ? zh : en;
@@ -1289,16 +1370,17 @@
 
     function depositChannels(amount) {
       return [
-        ["bank", "Bank Transfer", "USD", 100, 50000],
-        ["usdt", "USDT TRC20", "USDT", 20, 30000],
-        ["card", "Credit Card", "USD", 50, 10000],
-        ["wire", "Wire Pro", "USD", 10000, 100000]
-      ].map(([id, name, currency, min, max]) => ({
+        ["bankCard", t("银行卡", "Bank Card"), "USD", 100, 50000, true],
+        ["ewallet", t("电子钱包", "E-wallet"), "USD", 20, 30000, false],
+        ["crypto", t("数字货币", "Crypto"), "USDT", 20, 30000, false],
+        ["wire", t("电汇", "Wire Transfer"), "USD", 10000, 100000, true]
+      ].map(([id, name, currency, min, max, requiresProof]) => ({
         id,
         name,
         currency,
         min,
         max,
+        requiresProof,
         enabled: amount >= min && amount <= max
       }));
     }
@@ -1320,6 +1402,33 @@
       const canChangeAccount = accounts.length > 1 && appState.depositEntry !== "tradeAccount";
       const amount = appState.depositAmount;
       const selectedChannel = selectedDepositChannel(amount);
+
+      if (appState.depositStep === 2 && selectedChannel) {
+        return `
+          <button class="select-field" type="button" aria-disabled="true">
+            <label>${t("交易账号", "Trading Account")}</label>
+            <div class="field-value">
+              ${selectedAccountInfo ? `${selectedAccountInfo[0]} · ${selectedAccountInfo[1]}` : t("未选择", "Not selected")}
+              <span>${selectedAccountInfo ? selectedAccountInfo[2] : "—"}</span>
+            </div>
+          </button>
+
+          <div class="amount-stage">
+            <label>${t("存款金额", "Deposit Amount")}</label>
+            <div class="amount-display"><span>$</span><strong>${amount.toLocaleString("en-US")}</strong></div>
+            <div class="chips">
+              <button class="chip active" type="button">${selectedChannel.name}</button>
+              <button class="chip active" type="button">${t("转账凭证", "Transfer Proof")}</button>
+            </div>
+          </div>
+
+          <button class="upload-card ${appState.depositProof ? "active" : ""}" type="button" data-upload-proof>
+            <b>${appState.depositProof ? "✓" : "+"}</b>
+            <strong>${appState.depositProof ? "receipt_0429.png" : t("上传转账凭证", "Upload Transfer Proof")}</strong>
+            <span>${appState.depositProof ? t("已选择", "Selected") : selectedChannel.name}</span>
+          </button>
+        `;
+      }
 
       return `
         <button class="select-field" type="button" data-open-drawer="depositAccount" ${canChangeAccount ? "" : "aria-disabled=\"true\""}>
@@ -1368,6 +1477,93 @@
       ];
     }
 
+    function transferTypes(role) {
+      const types = [["trading", t("交易账号", "Trading")]];
+      if (role === "partner") {
+        types.push(["subWallet", t("下级 Wallet", "Sub Wallet")], ["subTrading", t("下级交易账号", "Sub Trading")]);
+      }
+      return types;
+    }
+
+    function transferDestinations(role) {
+      const type = role === "partner" ? appState.transferType : "trading";
+      const map = {
+        trading: [
+          ["MT5-204882", "Standard", "$22,180.42"],
+          ["MT5-309117", role === "partner" ? "Partner Pro" : "Pro", "$9,680.00"]
+        ],
+        subWallet: [
+          ["Mia Wang Wallet", t("下级 Wallet", "Sub Wallet"), "$188,200.00"],
+          ["Ryan Yu Wallet", t("下级 Wallet", "Sub Wallet"), "$112,600.00"]
+        ],
+        subTrading: [
+          ["Ryan Yu MT5", t("下级交易账号", "Sub Trading"), "$42,800.00"],
+          ["Sara Ng MT5", t("下级交易账号", "Sub Trading"), "$18,900.00"]
+        ]
+      };
+      return map[type] || map.trading;
+    }
+
+    function selectedTransferDestination(role) {
+      const destinations = transferDestinations(role);
+      return destinations.find(([id]) => id === appState.transferTo) || destinations[0];
+    }
+
+    function transferSource(role) {
+      return role === "partner"
+        ? ["Partner Wallet", "$388,120.50"]
+        : ["Wallet USD", "$96,250.40"];
+    }
+
+    function transferScreen(role) {
+      const source = transferSource(role);
+      const destination = selectedTransferDestination(role);
+      const amount = appState.transferAmount;
+      const types = transferTypes(role);
+
+      return `
+        <div class="form">
+          <button class="select-field" type="button" aria-disabled="true">
+            <label>${t("从", "From")}</label>
+            <div class="field-value">
+              ${source[0]}
+              <span>${source[1]}</span>
+            </div>
+          </button>
+
+          ${role === "partner" ? `
+            <div class="chips" style="margin-top:0">
+              ${types.map(([id, label]) => `<button class="chip ${appState.transferType === id ? "active" : ""}" type="button" data-transfer-type="${id}">${label}</button>`).join("")}
+            </div>
+          ` : ""}
+
+          <button class="select-field" type="button" data-open-drawer="transferTo">
+            <label>${t("到", "To")}</label>
+            <div class="field-value">
+              ${destination[0]}
+              <span>${destination[1]}</span>
+            </div>
+          </button>
+
+          <div class="amount-stage">
+            <label>${t("转账金额", "Transfer Amount")}</label>
+            <div class="amount-display"><span>$</span><strong>${amount.toLocaleString("en-US")}</strong></div>
+            <div class="chips">
+              ${[2000, 8000, 18000, 50000].map(value => `
+                <button class="chip ${amount === value ? "active" : ""}" type="button" data-transfer-amount="${value}">$${value.toLocaleString("en-US")}</button>
+              `).join("")}
+            </div>
+          </div>
+        </div>
+        <div class="section-title">${t("划转后", "After Transfer")}</div>
+        <div class="list">
+          ${item(source[0], t("可用余额", "Available Balance"), money(role === "partner" ? "$370,120.50" : "$88,250.40", t("预计", "Estimated")))}
+          ${item(destination[0], destination[1], money(`+$${amount.toLocaleString("en-US")}`, t("到账", "Credit")))}
+        </div>
+        ${stickySubmit(t("立即转账", "Transfer Now"))}
+      `;
+    }
+
     function withdrawScreen(role) {
       const accounts = depositAccounts(role);
       const selectedAccount = resolveWithdrawAccount(role);
@@ -1411,15 +1607,15 @@
       const walletActions = partner
         ? `
           <div class="quick-grid four">
-            <button class="quick" data-jump="transfer"><span>▣</span>${t("转到交易账号", "To Trading")}</button>
-            <button class="quick" data-jump="transfer"><span>◫</span>${t("转到下级 Wallet", "To Sub Wallet")}</button>
-            <button class="quick" data-jump="transfer"><span>◇</span>${t("转到下级交易账号", "To Sub Trading")}</button>
+            <button class="quick" data-jump="transfer" data-transfer-type="trading"><span>▣</span>${t("转到交易账号", "To Trading")}</button>
+            <button class="quick" data-jump="transfer" data-transfer-type="subWallet"><span>◫</span>${t("转到下级 Wallet", "To Sub Wallet")}</button>
+            <button class="quick" data-jump="transfer" data-transfer-type="subTrading"><span>◇</span>${t("转到下级交易账号", "To Sub Trading")}</button>
             <button class="quick" data-jump="withdraw"><span>-</span>${t("取款", "Withdraw")}</button>
           </div>
         `
         : `
           <div class="quick-grid two">
-            <button class="quick" data-jump="transfer"><span>▣</span>${t("转到交易账号", "To Trading")}</button>
+            <button class="quick" data-jump="transfer" data-transfer-type="trading"><span>▣</span>${t("转到交易账号", "To Trading")}</button>
             <button class="quick" data-jump="withdraw"><span>-</span>${t("取款", "Withdraw")}</button>
           </div>
         `;
@@ -1458,27 +1654,7 @@
         wallet: () => walletScreen("trader"),
         deposit: () => depositScreen("trader"),
         withdraw: () => withdrawScreen("trader"),
-        transfer: () => `
-          <div class="form">
-            <div class="field"><label>${t("从", "From")}</label><div class="field-value">Wallet USD <span>$96,250.40</span></div></div>
-            <div class="field"><label>${t("到", "To")}</label><div class="field-value">MT5-204882 <span>${t("交易账号", "Trading")}</span></div></div>
-            <div class="keypad">
-              <div class="money-input"><span>$</span><strong>8,000</strong></div>
-              <div class="chips">
-                <button class="chip">25%</button>
-                <button class="chip active">50%</button>
-                <button class="chip">75%</button>
-                <button class="chip">${t("全部", "All")}</button>
-              </div>
-            </div>
-          </div>
-          <div class="section-title">${t("账户", "Accounts")}</div>
-          <div class="list">
-            ${item("Wallet", t("可用 $96,250.40", "Available $96,250.40"), money("$88,250", t("转账后", "After")))}
-            ${item("MT5-204882", t("当前 $22,180.42", "Current $22,180.42"), money("$30,180", t("转账后", "After")))}
-          </div>
-          ${stickySubmit(t("立即转账", "Transfer Now"))}
-        `,
+        transfer: () => transferScreen("trader"),
         records: () => `
           <div class="toolbar">
             <button class="chip active">${t("全部", "All")}</button>
@@ -1523,27 +1699,7 @@
         tradeAccount: () => tradingAccountScreen("partner"),
         wallet: () => walletScreen("partner"),
         deposit: () => depositScreen("partner"),
-        transfer: () => `
-          <div class="form">
-            <div class="field"><label>${t("从", "From")}</label><div class="field-value">Partner Wallet <span>$388,120.50</span></div></div>
-            <div class="field"><label>${t("到", "To")}</label><div class="field-value">${t("下级交易账号", "Sub Trading Account")} <span>Ryan Yu MT5</span></div></div>
-            <div class="keypad">
-              <div class="money-input"><span>$</span><strong>18,000</strong></div>
-              <div class="chips">
-                <button class="chip active">${t("交易账号", "Trading")}</button>
-                <button class="chip">${t("下级 Wallet", "Sub Wallet")}</button>
-                <button class="chip">${t("下级交易账号", "Sub Trading")}</button>
-              </div>
-            </div>
-          </div>
-          <div class="section-title">${t("可选去向", "Available Destinations")}</div>
-          <div class="list">
-            ${item(t("转到交易账号", "To Trading"), "Partner Wallet → MT5-204882", badge(t("实时", "Instant"), "blue"))}
-            ${item(t("转到下级 Wallet", "To Sub Wallet"), "Partner Wallet → Mia Wang Wallet", badge(t("可用", "Available"), "green"))}
-            ${item(t("转到下级交易账号", "To Sub Trading"), "Partner Wallet → Ryan Yu MT5", badge(t("复核", "Review"), "amber"))}
-          </div>
-          ${stickySubmit(t("立即转账", "Transfer Now"))}
-        `,
+        transfer: () => transferScreen("partner"),
         withdraw: () => withdrawScreen("partner"),
         clients: () => `
           <div class="toolbar">
@@ -1811,7 +1967,7 @@
         drawerList.innerHTML = channels.map(channel => `
           <button class="channel-card ${selected && selected.id === channel.id ? "active" : ""} ${channel.enabled ? "" : "disabled"}" type="button" data-select-deposit-channel="${channel.id}" ${channel.enabled ? "" : "aria-disabled=\"true\""}>
             <div><strong>${channel.name}</strong><span>${channel.currency} · $${channel.min.toLocaleString("en-US")} - $${channel.max.toLocaleString("en-US")}</span></div>
-            ${channel.enabled ? badge(t("可选", "Available"), "green") : badge(t("超限", "Blocked"), "gray")}
+            ${channel.enabled ? badge(channel.requiresProof ? t("凭证", "Proof") : t("可选", "Available"), channel.requiresProof ? "amber" : "green") : badge(t("超限", "Blocked"), "gray")}
           </button>
         `).join("");
         return;
@@ -1827,6 +1983,66 @@
             ${badge(selected[0] === method[0] ? t("已选", "Selected") : t("可选", "Available"), selected[0] === method[0] ? "blue" : "green")}
           </button>
         `).join("");
+        return;
+      }
+
+      if (drawer === "transferTo") {
+        const destinations = transferDestinations(kind);
+        const selected = selectedTransferDestination(kind);
+        drawerTitle.textContent = t("选择去向", "Select Destination");
+        drawerList.innerHTML = destinations.map(destination => `
+          <button class="account-option ${selected[0] === destination[0] ? "active" : ""}" type="button" data-select-transfer-to="${destination[0]}">
+            <div><strong>${destination[0]}</strong><span>${destination[1]}</span></div>
+            ${money(destination[2], t("可用", "Available"))}
+          </button>
+        `).join("");
+      }
+    }
+
+    function renderToast() {
+      toast.textContent = appState.toast;
+      toast.classList.toggle("show", Boolean(appState.toast));
+    }
+
+    function showToast(message) {
+      appState.toast = message;
+      renderToast();
+      window.clearTimeout(toastTimer);
+      toastTimer = window.setTimeout(() => {
+        appState.toast = "";
+        renderToast();
+      }, 1800);
+    }
+
+    function resetDepositStep() {
+      appState.depositStep = 1;
+      appState.depositProof = false;
+    }
+
+    function submitCurrentFlow() {
+      const kind = roleKind();
+      if (appState.scene === "deposit") {
+        const channel = selectedDepositChannel(appState.depositAmount);
+        if (!resolveDepositAccount(kind) || !channel) return;
+        if (channel.requiresProof && appState.depositStep === 1) {
+          appState.depositStep = 2;
+          appState.depositProof = false;
+          renderScreen();
+          showToast(t("上传转账凭证", "Upload transfer proof"));
+          return;
+        }
+        if (channel.requiresProof && !appState.depositProof) return;
+        showToast(t("存款申请已提交", "Deposit submitted"));
+        return;
+      }
+      if (appState.scene === "withdraw") {
+        if (!resolveWithdrawAccount(kind) || !selectedPayoutMethod(kind)) return;
+        showToast(t("取款申请已提交", "Withdrawal submitted"));
+        return;
+      }
+      if (appState.scene === "transfer") {
+        if (!selectedTransferDestination(kind)) return;
+        showToast(t("转账已完成", "Transfer completed"));
       }
     }
 
@@ -1836,8 +2052,9 @@
       const kind = roleKind();
 
       if (appState.scene === "deposit" && (appState.role === "client" || appState.role === "ib")) {
-        label = t("提交存款", "Submit Deposit");
-        disabled = !resolveDepositAccount(kind);
+        const channel = selectedDepositChannel(appState.depositAmount);
+        label = appState.depositStep === 2 ? t("提交凭证", "Submit Proof") : t("提交存款", "Submit Deposit");
+        disabled = !resolveDepositAccount(kind) || !channel || (appState.depositStep === 2 && channel.requiresProof && !appState.depositProof);
       }
 
       if (appState.scene === "withdraw" && (appState.role === "client" || appState.role === "ib")) {
@@ -1850,7 +2067,7 @@
       }
 
       flowAction.classList.toggle("show", Boolean(label));
-      flowAction.innerHTML = label ? `<button class="primary" type="button" ${disabled ? "disabled" : ""}>${label}</button>` : "";
+      flowAction.innerHTML = label ? `<button class="primary" type="button" data-submit-flow ${disabled ? "disabled" : ""}>${label}</button>` : "";
     }
 
     function renderScreen() {
@@ -1864,14 +2081,18 @@
       renderControls();
       renderFlowAction();
       renderDrawer();
+      renderToast();
     }
 
     roleSelect.addEventListener("change", (event) => {
       appState.role = event.target.value;
       appState.depositEntry = "home";
       appState.depositAccount = null;
+      resetDepositStep();
       appState.withdrawEntry = "home";
       appState.withdrawAccount = null;
+      appState.transferType = "trading";
+      appState.transferTo = null;
       appState.activeDrawer = null;
       ensureScene();
       renderScreen();
@@ -1882,6 +2103,7 @@
       if (appState.scene === "deposit") {
         appState.depositEntry = "home";
         appState.depositAccount = null;
+        resetDepositStep();
       }
       if (appState.scene === "withdraw") {
         appState.withdrawEntry = "home";
@@ -1904,6 +2126,7 @@
     accountModeSelect.addEventListener("change", (event) => {
       appState.accountMode = event.target.value;
       appState.depositAccount = null;
+      resetDepositStep();
       appState.withdrawAccount = null;
       renderScreen();
     });
@@ -1914,8 +2137,11 @@
       appState.role = button.dataset.role;
       appState.depositEntry = "home";
       appState.depositAccount = null;
+      resetDepositStep();
       appState.withdrawEntry = "home";
       appState.withdrawAccount = null;
+      appState.transferType = "trading";
+      appState.transferTo = null;
       appState.activeDrawer = null;
       ensureScene();
       renderScreen();
@@ -1927,6 +2153,7 @@
       appState.scene = button.dataset.tab;
       if (appState.scene !== "deposit") {
         appState.depositEntry = appState.scene === "tradeAccount" ? "tradeAccount" : "home";
+        resetDepositStep();
       }
       if (appState.scene !== "withdraw") {
         appState.withdrawEntry = appState.scene === "tradeAccount" ? "tradeAccount" : "home";
@@ -1947,13 +2174,37 @@
       const amountButton = event.target.closest("[data-amount]");
       if (amountButton) {
         appState.depositAmount = Number(amountButton.dataset.amount);
+        resetDepositStep();
         renderScreen();
+        return;
+      }
+
+      const uploadProofButton = event.target.closest("[data-upload-proof]");
+      if (uploadProofButton) {
+        appState.depositProof = true;
+        renderScreen();
+        showToast(t("凭证已选择", "Proof selected"));
         return;
       }
 
       const withdrawAmountButton = event.target.closest("[data-withdraw-amount]");
       if (withdrawAmountButton) {
         appState.withdrawAmount = Number(withdrawAmountButton.dataset.withdrawAmount);
+        renderScreen();
+        return;
+      }
+
+      const transferAmountButton = event.target.closest("[data-transfer-amount]");
+      if (transferAmountButton) {
+        appState.transferAmount = Number(transferAmountButton.dataset.transferAmount);
+        renderScreen();
+        return;
+      }
+
+      const transferTypeButton = event.target.closest("[data-transfer-type]");
+      if (transferTypeButton && !transferTypeButton.hasAttribute("data-jump")) {
+        appState.transferType = transferTypeButton.dataset.transferType;
+        appState.transferTo = null;
         renderScreen();
         return;
       }
@@ -1978,10 +2229,15 @@
       if (appState.scene === "deposit") {
         appState.depositEntry = button.dataset.entry || "home";
         appState.depositAccount = appState.depositEntry === "tradeAccount" ? (button.dataset.accountId || "MT5-204882") : null;
+        resetDepositStep();
       }
       if (appState.scene === "withdraw") {
         appState.withdrawEntry = button.dataset.entry || "home";
         appState.withdrawAccount = appState.withdrawEntry === "tradeAccount" ? (button.dataset.accountId || "MT5-204882") : null;
+      }
+      if (appState.scene === "transfer") {
+        appState.transferType = button.dataset.transferType || "trading";
+        appState.transferTo = null;
       }
       renderScreen();
     });
@@ -1997,6 +2253,7 @@
       const depositAccount = event.target.closest("[data-select-deposit-account]");
       if (depositAccount) {
         appState.depositAccount = depositAccount.dataset.selectDepositAccount;
+        resetDepositStep();
         appState.activeDrawer = null;
         renderScreen();
         return;
@@ -2014,6 +2271,7 @@
       if (depositChannel) {
         if (depositChannel.getAttribute("aria-disabled") === "true") return;
         appState.depositChannel = depositChannel.dataset.selectDepositChannel;
+        resetDepositStep();
         appState.activeDrawer = null;
         renderScreen();
         return;
@@ -2024,7 +2282,45 @@
         appState.withdrawMethod = withdrawMethod.dataset.selectWithdrawMethod;
         appState.activeDrawer = null;
         renderScreen();
+        return;
       }
+
+      const transferTo = event.target.closest("[data-select-transfer-to]");
+      if (transferTo) {
+        appState.transferTo = transferTo.dataset.selectTransferTo;
+        appState.activeDrawer = null;
+        renderScreen();
+      }
+    });
+
+    flowAction.addEventListener("click", (event) => {
+      const submitButton = event.target.closest("[data-submit-flow]");
+      if (!submitButton || submitButton.disabled) return;
+      submitCurrentFlow();
+    });
+
+    backButton.addEventListener("click", () => {
+      if (appState.activeDrawer) {
+        closeDrawer();
+        return;
+      }
+      if (appState.scene === "deposit" && appState.depositStep === 2) {
+        resetDepositStep();
+        renderScreen();
+        return;
+      }
+      if (appState.role === "client" || appState.role === "ib") {
+        appState.scene = appState.scene === "overview" ? "records" : "overview";
+      } else {
+        appState.scene = roles[appState.role].tabs[0][0];
+      }
+      appState.depositEntry = "home";
+      appState.withdrawEntry = "home";
+      renderScreen();
+    });
+
+    messageButton.addEventListener("click", () => {
+      showToast(t("暂无新的资金通知", "No new fund notices"));
     });
 
     if ("scrollRestoration" in history) {
