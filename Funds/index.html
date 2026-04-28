@@ -1,0 +1,2038 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Funds App</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f3f3f3;
+      --app: #f7f7f7;
+      --surface: #ffffff;
+      --surface-2: #eeeeee;
+      --glass: rgba(247, 247, 247, .96);
+      --panel: rgba(255, 255, 255, .96);
+      --body-bg: #f3f3f3;
+      --ink: #000000;
+      --muted: #5f6368;
+      --line: #dedede;
+      --soft-line: #eeeeee;
+      --active-bg: #000000;
+      --active-border: #000000;
+      --brand: #000000;
+      --brand-dark: #000000;
+      --blue: #276ef1;
+      --red: #e11900;
+      --amber: #b95000;
+      --green: #048848;
+      --danger: #e11900;
+      --shadow: 0 18px 44px rgba(0, 0, 0, .12);
+      --radius: 4px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    body[data-theme="dark"] {
+      color-scheme: dark;
+      --page: #000000;
+      --app: #0f0f0f;
+      --surface: #1a1a1a;
+      --surface-2: #2a2a2a;
+      --glass: rgba(15, 15, 15, .96);
+      --panel: rgba(26, 26, 26, .96);
+      --body-bg: #000000;
+      --ink: #ffffff;
+      --muted: #a6a6a6;
+      --line: #333333;
+      --soft-line: #262626;
+      --active-bg: #ffffff;
+      --active-border: #ffffff;
+      --brand: #ffffff;
+      --brand-dark: #ffffff;
+      --blue: #5b91f5;
+      --red: #ff5c4d;
+      --amber: #ffb14a;
+      --green: #06c167;
+      --danger: #ff5c4d;
+      --shadow: 0 26px 78px rgba(0, 0, 0, .48);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--body-bg);
+      color: var(--ink);
+      letter-spacing: 0;
+    }
+
+    button,
+    select,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .stage {
+      min-height: 100vh;
+      padding: 34px 24px 110px;
+      display: grid;
+      justify-items: center;
+      align-items: start;
+    }
+
+    .device {
+      width: min(392px, calc(100vw - 34px));
+      border: 10px solid #000000;
+      border-radius: 28px;
+      background: #000000;
+      box-shadow: var(--shadow);
+    }
+
+    .app {
+      height: min(812px, calc(100vh - 56px));
+      min-height: 650px;
+      overflow: hidden;
+      border-radius: 18px;
+      background: var(--app);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .status {
+      height: 30px;
+      padding: 8px 18px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--ink);
+      font-size: 11px;
+      font-weight: 780;
+      background: var(--glass);
+    }
+
+    .appbar {
+      padding: 12px 18px 14px;
+      display: grid;
+      grid-template-columns: 38px 1fr 38px;
+      gap: 10px;
+      align-items: center;
+      background: var(--glass);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .icon-btn {
+      width: 38px;
+      height: 38px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--ink);
+      display: grid;
+      place-items: center;
+      font-size: 17px;
+      font-weight: 780;
+    }
+
+    .title {
+      min-width: 0;
+      text-align: center;
+    }
+
+    .title strong {
+      display: block;
+      font-size: 19px;
+      line-height: 1.16;
+      font-weight: 850;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .title span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 22px;
+      margin-top: 5px;
+      padding: 3px 8px;
+      border-radius: 2px;
+      background: var(--ink);
+      color: var(--app);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .content {
+      flex: 1;
+      padding: 14px 16px 16px;
+      overflow: auto;
+    }
+
+    .hero-card {
+      position: relative;
+      min-height: 218px;
+      padding: 22px;
+      overflow: hidden;
+      border-radius: 4px;
+      color: #fff;
+      background: #000000;
+      box-shadow: none;
+      display: grid;
+      align-content: space-between;
+    }
+
+    .hero-card.alt {
+      background: #000000;
+    }
+
+    .hero-card::before,
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+    }
+
+    .hero-card::before {
+      width: 96px;
+      height: 96px;
+      right: 20px;
+      top: 22px;
+      border: 1px solid rgba(255, 255, 255, .22);
+      border-radius: 4px;
+      transform: rotate(45deg);
+    }
+
+    .hero-card::after {
+      left: 22px;
+      right: 22px;
+      bottom: 90px;
+      height: 2px;
+      background: #ffffff;
+      opacity: .16;
+    }
+
+    .metric-label {
+      color: rgba(255, 255, 255, .72);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .metric-value {
+      margin-top: 12px;
+      font-size: 43px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .metric-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .mini-metric {
+      min-height: 62px;
+      padding: 12px;
+      border-radius: var(--radius);
+      background: #1f1f1f;
+      border: 1px solid #333333;
+    }
+
+    .mini-metric span,
+    .mini-metric b {
+      display: block;
+    }
+
+    .mini-metric span {
+      color: rgba(255, 255, 255, .72);
+      font-size: 11px;
+    }
+
+    .mini-metric b {
+      margin-top: 4px;
+      font-size: 14px;
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 12px 0;
+    }
+
+    .quick-grid.two {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .quick-grid.four {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .quick {
+      min-height: 76px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 7px;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .quick span {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 2px;
+      background: var(--ink);
+      color: var(--app);
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .section-title {
+      margin: 18px 1px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 860;
+    }
+
+    .section-title small {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 720;
+    }
+
+    .list {
+      display: grid;
+      gap: 9px;
+    }
+
+    .item {
+      min-height: 62px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .item-main {
+      min-width: 0;
+    }
+
+    .item-main strong {
+      display: block;
+      font-size: 13px;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .item-main span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .amount {
+      flex: 0 0 auto;
+      text-align: right;
+      font-size: 13px;
+      font-weight: 860;
+    }
+
+    .amount small {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 720;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      min-height: 25px;
+      padding: 5px 8px;
+      border-radius: 2px;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .badge.green { background: var(--green); }
+    .badge.amber { background: var(--amber); }
+    .badge.red { background: var(--danger); }
+    .badge.blue { background: var(--blue); }
+    .badge.gray { background: #71818c; }
+
+    .form {
+      display: grid;
+      gap: 10px;
+    }
+
+    .field {
+      min-height: 68px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+
+    .field label {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 760;
+    }
+
+    .field-value {
+      margin-top: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 820;
+    }
+
+    .field-value span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .select-field {
+      width: 100%;
+      min-height: 68px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--ink);
+      text-align: left;
+    }
+
+    .select-field label {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 760;
+      pointer-events: none;
+    }
+
+    .select-field .field-value {
+      pointer-events: none;
+    }
+
+    .select-field[aria-disabled="true"] {
+      cursor: default;
+    }
+
+    .account-options,
+    .channel-grid {
+      display: grid;
+      gap: 9px;
+    }
+
+    .account-option,
+    .channel-card {
+      width: 100%;
+      min-height: 66px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--ink);
+      text-align: left;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .account-option.active,
+    .channel-card.active {
+      border-color: var(--active-border);
+      background: var(--active-bg);
+      color: var(--app);
+    }
+
+    .account-option.active span,
+    .channel-card.active span,
+    .account-option.active small,
+    .channel-card.active small {
+      color: color-mix(in srgb, var(--app) 72%, transparent);
+    }
+
+    .account-option strong,
+    .channel-card strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .account-option span,
+    .channel-card span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 720;
+    }
+
+    .channel-card.disabled {
+      cursor: not-allowed;
+      opacity: .46;
+      filter: saturate(.6);
+    }
+
+    .keypad {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+
+    .amount-stage {
+      min-height: 190px;
+      padding: 20px;
+      border-radius: 4px;
+      color: #111820;
+      background: #ffffff;
+      border: 1px solid #dedede;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
+    }
+
+    .amount-stage label {
+      display: block;
+      color: #65737d;
+      font-size: 12px;
+      font-weight: 760;
+    }
+
+    .amount-display {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .amount-display span {
+      color: #65737d;
+      font-size: 20px;
+      font-weight: 820;
+    }
+
+    .amount-display strong {
+      font-size: 46px;
+      line-height: 1;
+      font-weight: 860;
+    }
+
+    .amount-stage .chips {
+      margin-top: 24px;
+    }
+
+    .amount-stage .chip {
+      border-color: #dce4e8;
+      background: #fff;
+      color: #24323a;
+      box-shadow: none;
+    }
+
+    .amount-stage .chip.active {
+      border-color: #000000;
+      background: #000000;
+      color: #ffffff;
+    }
+
+    body[data-theme="dark"] .amount-stage {
+      color: #111820;
+      background: #ffffff;
+      border-color: #ffffff;
+      box-shadow: none;
+    }
+
+    .money-input {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 0 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .money-input span {
+      color: var(--muted);
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .money-input strong {
+      font-size: 38px;
+      line-height: 1;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 12px;
+    }
+
+    .chip {
+      min-height: 30px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .chip.active {
+      border-color: var(--active-border);
+      background: var(--active-bg);
+      color: var(--app);
+    }
+
+    .primary {
+      width: 100%;
+      min-height: 48px;
+      margin-top: 12px;
+      border: 0;
+      border-radius: var(--radius);
+      background: var(--brand);
+      color: var(--app);
+      font-size: 15px;
+      font-weight: 860;
+      box-shadow: none;
+    }
+
+    .primary:disabled {
+      cursor: not-allowed;
+      opacity: .48;
+      box-shadow: none;
+    }
+
+    .flow-action {
+      display: none;
+      padding: 12px 16px;
+      border-top: 1px solid var(--line);
+      background: var(--glass);
+      backdrop-filter: blur(16px);
+    }
+
+    .flow-action.show {
+      display: block;
+    }
+
+    .flow-action .primary {
+      margin-top: 0;
+    }
+
+    .secondary {
+      width: 100%;
+      min-height: 46px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      margin-bottom: 12px;
+    }
+
+    .toolbar .chip {
+      flex: 0 0 auto;
+    }
+
+    .client-card {
+      min-height: 92px;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+
+    .client-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .avatar-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--brand-dark);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .progress {
+      height: 7px;
+      margin-top: 13px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      overflow: hidden;
+    }
+
+    .progress b {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--ink);
+    }
+
+    .review-panel {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+
+    .review-panel .row {
+      min-height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--soft-line);
+      font-size: 13px;
+      font-weight: 760;
+    }
+
+    .review-panel .row:last-child {
+      border-bottom: 0;
+    }
+
+    .review-panel .row span {
+      color: var(--muted);
+      font-weight: 720;
+    }
+
+    .risk-score {
+      min-height: 164px;
+      padding: 18px;
+      border-radius: var(--radius);
+      background: #2f3337;
+      color: #fff;
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      text-align: center;
+    }
+
+    .risk-score strong {
+      display: block;
+      font-size: 58px;
+      line-height: 1;
+    }
+
+    .risk-score span {
+      margin-top: 8px;
+      color: rgba(255, 255, 255, .72);
+      font-size: 12px;
+      font-weight: 740;
+    }
+
+    .tabbar {
+      height: 64px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid var(--line);
+      background: var(--panel);
+    }
+
+    .tab {
+      border: 0;
+      background: transparent;
+      color: #7a8790;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 3px;
+      font-size: 10px;
+      font-weight: 780;
+    }
+
+    .tab b {
+      width: 22px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      font-size: 15px;
+      line-height: 1;
+    }
+
+    .tab.active {
+      color: var(--brand);
+    }
+
+    .control-panel {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      z-index: 40;
+      width: min(380px, calc(100vw - 44px));
+      padding: 14px;
+      border: 1px solid rgba(220, 228, 232, .95);
+      border-radius: 12px;
+      background: var(--panel);
+      box-shadow: 0 18px 48px rgba(22, 35, 45, .18);
+      backdrop-filter: blur(18px);
+    }
+
+    .control-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .control-head strong {
+      font-size: 14px;
+    }
+
+    .control-head span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 760;
+    }
+
+    .control-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .control-field label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 780;
+    }
+
+    .control-field select {
+      width: 100%;
+      height: 40px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--ink);
+      padding: 0 10px;
+      font-size: 13px;
+      font-weight: 760;
+    }
+
+    .control-actions {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 7px;
+      margin-top: 12px;
+    }
+
+    .control-actions button {
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 780;
+    }
+
+    .control-actions button.active {
+      border-color: var(--active-border);
+      background: var(--active-bg);
+      color: var(--app);
+    }
+
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 70;
+      background: rgba(10, 20, 25, .34);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
+    }
+
+    .drawer-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .drawer {
+      position: fixed;
+      left: 50%;
+      bottom: 0;
+      z-index: 80;
+      width: min(430px, 100vw);
+      max-height: min(78vh, 640px);
+      padding: 10px 14px 18px;
+      border-radius: 22px 22px 0 0;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 -24px 64px rgba(20, 34, 42, .22);
+      transform: translate(-50%, 105%);
+      transition: transform .24s ease;
+      backdrop-filter: blur(18px);
+    }
+
+    .drawer.open {
+      transform: translate(-50%, 0);
+    }
+
+    .drawer-handle {
+      width: 42px;
+      height: 5px;
+      margin: 0 auto 13px;
+      border-radius: 99px;
+      background: var(--line);
+    }
+
+    .drawer-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .drawer-head strong {
+      font-size: 17px;
+    }
+
+    .drawer-close {
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--ink);
+      font-weight: 820;
+    }
+
+    .drawer-list {
+      display: grid;
+      gap: 9px;
+      overflow: auto;
+      max-height: calc(min(78vh, 640px) - 84px);
+      padding-bottom: 4px;
+    }
+
+    @media (max-width: 760px) {
+      .stage {
+        padding: 12px 10px 266px;
+        align-items: start;
+      }
+
+      .device {
+        border-width: 0;
+        border-radius: 0;
+        width: 100%;
+        max-width: 430px;
+        box-shadow: none;
+        background: transparent;
+      }
+
+      .app {
+        height: calc(100vh - 278px);
+        min-height: 560px;
+        border-radius: 0 0 18px 18px;
+      }
+
+      .control-panel {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        width: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="stage">
+    <section class="device" aria-label="Funds app prototype">
+      <div class="app">
+        <div class="status">
+          <span>9:41</span>
+          <span>5G 100%</span>
+        </div>
+        <header class="appbar">
+          <button class="icon-btn" type="button" aria-label="返回">‹</button>
+          <div class="title">
+            <strong id="screenTitle">资金总览</strong>
+            <span id="roleChip">Trader</span>
+          </div>
+          <button class="icon-btn" type="button" aria-label="消息">•</button>
+        </header>
+        <div class="content" id="screen"></div>
+        <div class="flow-action" id="flowAction"></div>
+        <nav class="tabbar" id="tabbar" aria-label="底部导航"></nav>
+      </div>
+    </section>
+
+    <aside class="control-panel" id="controlPanel" aria-label="控制面板">
+      <div class="control-head">
+        <strong id="controlTitle">控制面板</strong>
+        <span id="panelState">Trader / 总览</span>
+      </div>
+      <div class="control-grid">
+        <div class="control-field">
+          <label for="roleSelect" id="roleLabel">角色</label>
+          <select id="roleSelect"></select>
+        </div>
+        <div class="control-field">
+          <label for="sceneSelect" id="sceneLabel">场景</label>
+          <select id="sceneSelect"></select>
+        </div>
+        <div class="control-field">
+          <label for="languageSelect" id="languageLabel">语言</label>
+          <select id="languageSelect">
+            <option value="zh">中文</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+        <div class="control-field">
+          <label for="themeSelect" id="themeLabel">主题</label>
+          <select id="themeSelect">
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </div>
+        <div class="control-field">
+          <label for="accountModeSelect" id="accountModeLabel">账号情况</label>
+          <select id="accountModeSelect">
+            <option value="multiple">多个交易账号</option>
+            <option value="single">单个交易账号</option>
+          </select>
+        </div>
+      </div>
+      <div class="control-actions" id="roleButtons"></div>
+    </aside>
+    <div class="drawer-backdrop" id="drawerBackdrop"></div>
+    <section class="drawer" id="bottomDrawer" aria-modal="true" aria-label="底部选择器">
+      <div class="drawer-handle"></div>
+      <div class="drawer-head">
+        <strong id="drawerTitle">选择</strong>
+        <button class="drawer-close" type="button" data-close-drawer>×</button>
+      </div>
+      <div class="drawer-list" id="drawerList"></div>
+    </section>
+  </main>
+
+  <script>
+    const appState = {
+      role: "client",
+      scene: "overview",
+      lang: "zh",
+      theme: "light",
+      depositEntry: "home",
+      depositAccount: null,
+      depositAmount: 5000,
+      depositChannel: null,
+      withdrawEntry: "home",
+      withdrawAccount: null,
+      withdrawAmount: 12000,
+      withdrawMethod: null,
+      accountMode: "multiple",
+      activeDrawer: null
+    };
+
+    const roles = {
+      client: {
+        name: "Trader",
+        enName: "Trader",
+        chip: "Trader",
+        tabs: [
+          ["overview", "⌂", "首页", "Home"],
+          ["tradeAccount", "▣", "交易账号", "Trading"],
+          ["wallet", "◫", "Wallet", "Wallet"],
+          ["records", "≡", "流水", "Records"]
+        ],
+        scenes: [
+          ["overview", "总览", "Overview"],
+          ["tradeAccount", "交易账号", "Trading Account"],
+          ["wallet", "Wallet", "Wallet"],
+          ["deposit", "存款", "Deposit"],
+          ["transfer", "转账", "Transfer"],
+          ["withdraw", "取款", "Withdraw"],
+          ["records", "流水", "Records"]
+        ]
+      },
+      ib: {
+        name: "Partner",
+        enName: "Partner",
+        chip: "Partner",
+        tabs: [
+          ["overview", "⌂", "首页", "Home"],
+          ["tradeAccount", "▣", "交易账号", "Trading"],
+          ["wallet", "◫", "Wallet", "Wallet"],
+          ["clients", "◇", "Trader", "Traders"]
+        ],
+        scenes: [
+          ["overview", "总览", "Overview"],
+          ["tradeAccount", "交易账号", "Trading Account"],
+          ["wallet", "Wallet", "Wallet"],
+          ["deposit", "存款", "Deposit"],
+          ["transfer", "转账", "Transfer"],
+          ["withdraw", "取款", "Withdraw"],
+          ["clients", "Trader", "Traders"],
+          ["alerts", "跟进", "Follow-up"],
+          ["records", "流水", "Records"]
+        ]
+      },
+      finance: {
+        name: "财务",
+        enName: "Finance",
+        chip: "Finance",
+        tabs: [
+          ["queue", "⌂", "待办", "Queue"],
+          ["depositReview", "+", "入金", "Deposit"],
+          ["payout", "-", "出金", "Payout"],
+          ["reconcile", "≡", "对账", "Reconcile"]
+        ],
+        scenes: [
+          ["queue", "待办", "Queue"],
+          ["depositReview", "入金审核", "Deposit Review"],
+          ["payout", "出金处理", "Payout"],
+          ["reconcile", "对账", "Reconcile"]
+        ]
+      },
+      risk: {
+        name: "风控",
+        enName: "Risk",
+        chip: "Risk",
+        tabs: [
+          ["alerts", "!", "预警", "Alerts"],
+          ["review", "◇", "复核", "Review"],
+          ["rules", "≡", "规则", "Rules"],
+          ["profile", "◌", "我的", "Me"]
+        ],
+        scenes: [
+          ["alerts", "预警", "Alerts"],
+          ["review", "人工复核", "Manual Review"],
+          ["rules", "规则", "Rules"],
+          ["records", "审计", "Audit"]
+        ]
+      }
+    };
+
+    const screen = document.querySelector("#screen");
+    const title = document.querySelector("#screenTitle");
+    const roleChip = document.querySelector("#roleChip");
+    const tabbar = document.querySelector("#tabbar");
+    const flowAction = document.querySelector("#flowAction");
+    const roleSelect = document.querySelector("#roleSelect");
+    const sceneSelect = document.querySelector("#sceneSelect");
+    const languageSelect = document.querySelector("#languageSelect");
+    const themeSelect = document.querySelector("#themeSelect");
+    const accountModeSelect = document.querySelector("#accountModeSelect");
+    const roleButtons = document.querySelector("#roleButtons");
+    const panelState = document.querySelector("#panelState");
+    const controlTitle = document.querySelector("#controlTitle");
+    const roleLabel = document.querySelector("#roleLabel");
+    const sceneLabel = document.querySelector("#sceneLabel");
+    const languageLabel = document.querySelector("#languageLabel");
+    const themeLabel = document.querySelector("#themeLabel");
+    const accountModeLabel = document.querySelector("#accountModeLabel");
+    const drawerBackdrop = document.querySelector("#drawerBackdrop");
+    const bottomDrawer = document.querySelector("#bottomDrawer");
+    const drawerTitle = document.querySelector("#drawerTitle");
+    const drawerList = document.querySelector("#drawerList");
+
+    function t(zh, en) {
+      return appState.lang === "zh" ? zh : en;
+    }
+
+    function roleName(role) {
+      return appState.lang === "zh" ? role.name : role.enName;
+    }
+
+    function money(value, note) {
+      return `<div class="amount">${value}${note ? `<small>${note}</small>` : ""}</div>`;
+    }
+
+    function badge(text, tone) {
+      return `<span class="badge ${tone}">${text}</span>`;
+    }
+
+    function stickySubmit(label) {
+      return "";
+    }
+
+    function item(titleText, meta, right) {
+      return `
+        <div class="item">
+          <div class="item-main">
+            <strong>${titleText}</strong>
+            <span>${meta}</span>
+          </div>
+          ${right}
+        </div>
+      `;
+    }
+
+    function hero(label, value, a, b, alt = false) {
+      return `
+        <div class="hero-card ${alt ? "alt" : ""}">
+          <div class="metric-label">${label}</div>
+          <div class="metric-value">${value}</div>
+          <div class="metric-row">
+            <div class="mini-metric"><span>${a[0]}</span><b>${a[1]}</b></div>
+            <div class="mini-metric"><span>${b[0]}</span><b>${b[1]}</b></div>
+          </div>
+        </div>
+      `;
+    }
+
+    function publicFundActions(entry = "home", accountId = "") {
+      return `
+        <div class="quick-grid">
+          <button class="quick" data-jump="deposit" data-entry="${entry}" data-account-id="${accountId}"><span>+</span>${t("存款", "Deposit")}</button>
+          <button class="quick" data-jump="transfer"><span>↔</span>${t("转账", "Transfer")}</button>
+          <button class="quick" data-jump="withdraw" data-entry="${entry}" data-account-id="${accountId}"><span>-</span>${t("取款", "Withdraw")}</button>
+        </div>
+      `;
+    }
+
+    function tradingAccountScreen(role) {
+      const detailAccount = "MT5-204882";
+      return `
+        ${hero(t("交易账号详情", "Trading Account Detail"), "$31,860.42", [detailAccount, "Standard"], [t("可用保证金", "Free Margin"), "$18,420.10"], true)}
+        ${publicFundActions("tradeAccount", detailAccount)}
+        <div class="section-title">${t("账号列表", "Accounts")}</div>
+        <div class="list">
+          ${item("MT5-204882", t("Wallet 可转入 $96,250.40", "Wallet available $96,250.40"), money("$22,180.42", t("净值", "Equity")))}
+          ${item("MT5-309117", role === "partner" ? t("下级交易账号", "Subordinate trading account") : t("模拟策略账号", "Strategy account"), money("$9,680.00", t("净值", "Equity")))}
+        </div>
+      `;
+    }
+
+    function depositAccounts(role) {
+      const accounts = role === "partner"
+        ? [
+          ["MT5-204882", "Partner Standard", "$22,180.42"],
+          ["MT5-309117", t("下级交易账号", "Sub Trading"), "$9,680.00"],
+          ["MT5-572001", t("下级交易账号", "Sub Trading"), "$18,240.00"]
+        ]
+        : [
+          ["MT5-204882", "Standard", "$22,180.42"],
+          ["MT5-309117", "Pro", "$9,680.00"]
+        ];
+      return appState.accountMode === "single" ? accounts.slice(0, 1) : accounts;
+    }
+
+    function resolveDepositAccount(role) {
+      const accounts = depositAccounts(role);
+      if (appState.depositEntry === "tradeAccount") return appState.depositAccount || "MT5-204882";
+      if (accounts.length === 1) return accounts[0][0];
+      return appState.depositAccount;
+    }
+
+    function depositChannels(amount) {
+      return [
+        ["bank", "Bank Transfer", "USD", 100, 50000],
+        ["usdt", "USDT TRC20", "USDT", 20, 30000],
+        ["card", "Credit Card", "USD", 50, 10000],
+        ["wire", "Wire Pro", "USD", 10000, 100000]
+      ].map(([id, name, currency, min, max]) => ({
+        id,
+        name,
+        currency,
+        min,
+        max,
+        enabled: amount >= min && amount <= max
+      }));
+    }
+
+    function selectedDepositChannel(amount) {
+      const channels = depositChannels(amount);
+      return channels.find(channel => channel.id === appState.depositChannel && channel.enabled) || channels.find(channel => channel.enabled) || null;
+    }
+
+    function selectedPayoutMethod(role) {
+      const methods = payoutMethods(role);
+      return methods.find(method => method[0] === appState.withdrawMethod) || methods[0];
+    }
+
+    function depositScreen(role) {
+      const accounts = depositAccounts(role);
+      const selectedAccount = resolveDepositAccount(role);
+      const selectedAccountInfo = accounts.find(([id]) => id === selectedAccount);
+      const canChangeAccount = accounts.length > 1 && appState.depositEntry !== "tradeAccount";
+      const amount = appState.depositAmount;
+      const selectedChannel = selectedDepositChannel(amount);
+
+      return `
+        <button class="select-field" type="button" data-open-drawer="depositAccount" ${canChangeAccount ? "" : "aria-disabled=\"true\""}>
+          <label>${t("交易账号", "Trading Account")}</label>
+          <div class="field-value">
+            ${selectedAccountInfo ? `${selectedAccountInfo[0]} · ${selectedAccountInfo[1]}` : t("未选择", "Not selected")}
+            <span>${selectedAccountInfo ? selectedAccountInfo[2] : "—"}</span>
+          </div>
+        </button>
+
+        <div class="amount-stage">
+          <label>${t("存款金额", "Deposit Amount")}</label>
+          <div class="amount-display"><span>$</span><strong>${amount.toLocaleString("en-US")}</strong></div>
+          <div class="chips">
+            ${[500, 5000, 20000, 80000].map(value => `
+              <button class="chip ${amount === value ? "active" : ""}" type="button" data-amount="${value}">$${value.toLocaleString("en-US")}</button>
+            `).join("")}
+          </div>
+        </div>
+
+        <button class="select-field" type="button" data-open-drawer="depositChannel">
+          <label>${t("通道", "Channel")}</label>
+          <div class="field-value">
+            ${selectedChannel ? selectedChannel.name : t("暂无可用通道", "No available channel")}
+            <span>${selectedChannel ? `${selectedChannel.currency} · $${selectedChannel.min.toLocaleString("en-US")} - $${selectedChannel.max.toLocaleString("en-US")}` : t("超出限额", "Out of range")}</span>
+          </div>
+        </button>
+        ${stickySubmit(t("提交存款", "Submit Deposit"))}
+      `;
+    }
+
+    function resolveWithdrawAccount(role) {
+      const accounts = depositAccounts(role);
+      if (appState.withdrawEntry === "tradeAccount") return appState.withdrawAccount || "MT5-204882";
+      if (accounts.length === 1) return accounts[0][0];
+      return appState.withdrawAccount;
+    }
+
+    function payoutMethods(role) {
+      const partner = role === "partner";
+      return [
+        ["bank", partner ? "HSBC **** 2048" : "Chase **** 8012", t("银行卡", "Bank Card"), "$18", t("1-2 小时", "1-2 hours")],
+        ["ewallet", "Wise USD", t("电子钱包", "E-wallet"), "$6", t("30 分钟", "30 min")],
+        ["crypto", "USDT TRC20", t("电子钱包", "E-wallet"), "$2", t("10 分钟", "10 min")],
+        ["local", partner ? "Local Bank **** 7812" : "ACH **** 4410", t("本地转账", "Local Transfer"), "$0", t("1 个工作日", "1 business day")]
+      ];
+    }
+
+    function withdrawScreen(role) {
+      const accounts = depositAccounts(role);
+      const selectedAccount = resolveWithdrawAccount(role);
+      const selectedAccountInfo = accounts.find(([id]) => id === selectedAccount);
+      const canChangeAccount = accounts.length > 1 && appState.withdrawEntry !== "tradeAccount";
+      const amount = appState.withdrawAmount;
+      const selectedMethod = selectedPayoutMethod(role);
+
+      return `
+        <button class="select-field" type="button" data-open-drawer="withdrawAccount" ${canChangeAccount ? "" : "aria-disabled=\"true\""}>
+          <label>${t("交易账号", "Trading Account")}</label>
+          <div class="field-value">
+            ${selectedAccountInfo ? `${selectedAccountInfo[0]} · ${selectedAccountInfo[1]}` : t("未选择", "Not selected")}
+            <span>${selectedAccountInfo ? selectedAccountInfo[2] : "—"}</span>
+          </div>
+        </button>
+
+        <div class="amount-stage">
+          <label>${t("取款金额", "Withdrawal Amount")}</label>
+          <div class="amount-display"><span>$</span><strong>${amount.toLocaleString("en-US")}</strong></div>
+          <div class="chips">
+            ${[1000, 5000, 12000, 36000].map(value => `
+              <button class="chip ${amount === value ? "active" : ""}" type="button" data-withdraw-amount="${value}">$${value.toLocaleString("en-US")}</button>
+            `).join("")}
+          </div>
+        </div>
+
+        <button class="select-field" type="button" data-open-drawer="withdrawMethod">
+          <label>${t("收款方式", "Receiving Method")}</label>
+          <div class="field-value">
+            ${selectedMethod[1]}
+            <span>${selectedMethod[2]} · ${t("费用", "Fee")} ${selectedMethod[3]}</span>
+          </div>
+        </button>
+        ${stickySubmit(t("确认取款", "Confirm Withdrawal"))}
+      `;
+    }
+
+    function walletScreen(role) {
+      const partner = role === "partner";
+      const walletActions = partner
+        ? `
+          <div class="quick-grid four">
+            <button class="quick" data-jump="transfer"><span>▣</span>${t("转到交易账号", "To Trading")}</button>
+            <button class="quick" data-jump="transfer"><span>◫</span>${t("转到下级 Wallet", "To Sub Wallet")}</button>
+            <button class="quick" data-jump="transfer"><span>◇</span>${t("转到下级交易账号", "To Sub Trading")}</button>
+            <button class="quick" data-jump="withdraw"><span>-</span>${t("取款", "Withdraw")}</button>
+          </div>
+        `
+        : `
+          <div class="quick-grid two">
+            <button class="quick" data-jump="transfer"><span>▣</span>${t("转到交易账号", "To Trading")}</button>
+            <button class="quick" data-jump="withdraw"><span>-</span>${t("取款", "Withdraw")}</button>
+          </div>
+        `;
+
+      return `
+        ${hero("Wallet USD", partner ? "$420,880.50" : "$96,250.40", [t("可用", "Available"), partner ? "$388,120.50" : "$96,250.40"], [t("冻结", "Frozen"), partner ? "$12,800.00" : "$2,180.00"])}
+        ${walletActions}
+        <div class="section-title">${t("最近 Wallet 流水", "Recent Wallet Records")}</div>
+        <div class="list">
+          ${item(t("Wallet 转交易账号", "Wallet to Trading"), "Wallet → MT5-204882", badge(t("实时", "Instant"), "blue"))}
+          ${partner ? item(t("转到下级 Wallet", "To Sub Wallet"), "Partner Wallet → Mia Wang Wallet", badge(t("成功", "Done"), "green")) : ""}
+          ${partner ? item(t("转到下级交易账号", "To Sub Trading"), "Partner Wallet → Ryan Yu MT5", badge(t("待审", "Review"), "amber")) : ""}
+          ${item(t("取款申请", "Withdrawal Request"), "Chase **** 8012", badge(t("待审", "Review"), "amber"))}
+        </div>
+      `;
+    }
+
+    const screens = {
+      client: {
+        overview: () => `
+          ${hero(t("总资产 USD", "Total Assets USD"), "$128,430.82", [t("可用", "Available"), "$96,250.40"], [t("冻结", "Frozen"), "$2,180.00"])}
+          ${publicFundActions()}
+          <div class="section-title">${t("资金入口", "Fund Entry")}</div>
+          <div class="list">
+            ${item("Wallet", t("支持转交易账号、取款", "Transfer to trading or withdraw"), money("$96,250.40", t("可用", "Available")))}
+            ${item(t("交易账号", "Trading Account"), "MT5-204882 · Standard", money("$22,180.42", t("净值", "Equity")))}
+          </div>
+          <div class="section-title">${t("资金动态", "Activity")} <small>${t("今日", "Today")}</small></div>
+          <div class="list">
+            ${item(t("入金到账", "Deposit received"), "USD 5,000 · Bank Transfer", badge(t("成功", "Done"), "green"))}
+            ${item(t("合约账户划转", "Contract transfer"), "Wallet → MT5-204882", badge(t("实时", "Instant"), "blue"))}
+            ${item(t("出金申请", "Withdrawal request"), "Chase **** 8012", badge(t("待审", "Review"), "amber"))}
+          </div>
+        `,
+        tradeAccount: () => tradingAccountScreen("trader"),
+        wallet: () => walletScreen("trader"),
+        deposit: () => depositScreen("trader"),
+        withdraw: () => withdrawScreen("trader"),
+        transfer: () => `
+          <div class="form">
+            <div class="field"><label>${t("从", "From")}</label><div class="field-value">Wallet USD <span>$96,250.40</span></div></div>
+            <div class="field"><label>${t("到", "To")}</label><div class="field-value">MT5-204882 <span>${t("交易账号", "Trading")}</span></div></div>
+            <div class="keypad">
+              <div class="money-input"><span>$</span><strong>8,000</strong></div>
+              <div class="chips">
+                <button class="chip">25%</button>
+                <button class="chip active">50%</button>
+                <button class="chip">75%</button>
+                <button class="chip">${t("全部", "All")}</button>
+              </div>
+            </div>
+          </div>
+          <div class="section-title">${t("账户", "Accounts")}</div>
+          <div class="list">
+            ${item("Wallet", t("可用 $96,250.40", "Available $96,250.40"), money("$88,250", t("转账后", "After")))}
+            ${item("MT5-204882", t("当前 $22,180.42", "Current $22,180.42"), money("$30,180", t("转账后", "After")))}
+          </div>
+          ${stickySubmit(t("立即转账", "Transfer Now"))}
+        `,
+        records: () => `
+          <div class="toolbar">
+            <button class="chip active">${t("全部", "All")}</button>
+            <button class="chip">${t("存款", "Deposit")}</button>
+            <button class="chip">${t("取款", "Withdraw")}</button>
+            <button class="chip">${t("转账", "Transfer")}</button>
+          </div>
+          <div class="list">
+            ${item("Deposit", "Bank Transfer · 04/28 14:22", money("+$5,000", t("成功", "Done")))}
+            ${item("Transfer", "Wallet → MT5 · 04/28 11:05", money("-$8,000", t("实时", "Instant")))}
+            ${item("Withdrawal", "Chase **** 8012 · 04/27", money("-$12,000", t("待审", "Review")))}
+            ${item("Deposit", "USDT · 04/26", money("+$2,400", t("成功", "Done")))}
+            ${item("Adjustment", "Fee rebate · 04/24", money("+$18", t("入账", "Posted")))}
+          </div>
+        `,
+        profile: () => `
+          ${hero(t("账户等级", "Account Level"), "Verified", ["2FA", t("已启用", "Enabled")], [t("银行卡", "Bank Cards"), t("2 张", "2 Cards")], true)}
+          <div class="section-title">${t("常用设置", "Settings")}</div>
+          <div class="list">
+            ${item(t("收款账户", "Receiving Account"), "Chase **** 8012", badge(t("默认", "Default"), "blue"))}
+            ${item(t("资金密码", "Funds PIN"), t("上次更新 18 天前", "Updated 18 days ago"), badge(t("安全", "Secure"), "green"))}
+            ${item(t("通知", "Notifications"), "App Push / Email", badge(t("开启", "On"), "green"))}
+          </div>
+        `
+      },
+      ib: {
+        overview: () => `
+          ${hero(t("名下 Trader 资产", "Trader AUM"), "$8.42M", [t("本月入金", "Monthly Deposit"), "$620K"], [t("待跟进", "Follow-ups"), "18"])}
+          ${publicFundActions()}
+          <div class="section-title">${t("Partner Wallet", "Partner Wallet")}</div>
+          <div class="list">
+            ${item("Wallet", t("支持转交易账号、下级 Wallet、下级交易账号、取款", "To trading, sub wallet, sub trading, or withdraw"), money("$388,120.50", t("可用", "Available")))}
+            ${item(t("下级资金", "Subordinate Funds"), "186 Traders", money("$8.42M", t("资产", "AUM")))}
+          </div>
+          <div class="section-title">${t("重点 Trader", "Key Traders")}</div>
+          <div class="list">
+            ${clientCard("AL", "Alex Lee", "$320,400", "72%", t("出金待审", "Withdrawal Review"))}
+            ${clientCard("MW", "Mia Wang", "$188,200", "45%", t("凭证缺失", "Missing Receipt"))}
+            ${clientCard("JC", "Jon Chen", "$82,900", "90%", t("活跃", "Active"))}
+          </div>
+        `,
+        tradeAccount: () => tradingAccountScreen("partner"),
+        wallet: () => walletScreen("partner"),
+        deposit: () => depositScreen("partner"),
+        transfer: () => `
+          <div class="form">
+            <div class="field"><label>${t("从", "From")}</label><div class="field-value">Partner Wallet <span>$388,120.50</span></div></div>
+            <div class="field"><label>${t("到", "To")}</label><div class="field-value">${t("下级交易账号", "Sub Trading Account")} <span>Ryan Yu MT5</span></div></div>
+            <div class="keypad">
+              <div class="money-input"><span>$</span><strong>18,000</strong></div>
+              <div class="chips">
+                <button class="chip active">${t("交易账号", "Trading")}</button>
+                <button class="chip">${t("下级 Wallet", "Sub Wallet")}</button>
+                <button class="chip">${t("下级交易账号", "Sub Trading")}</button>
+              </div>
+            </div>
+          </div>
+          <div class="section-title">${t("可选去向", "Available Destinations")}</div>
+          <div class="list">
+            ${item(t("转到交易账号", "To Trading"), "Partner Wallet → MT5-204882", badge(t("实时", "Instant"), "blue"))}
+            ${item(t("转到下级 Wallet", "To Sub Wallet"), "Partner Wallet → Mia Wang Wallet", badge(t("可用", "Available"), "green"))}
+            ${item(t("转到下级交易账号", "To Sub Trading"), "Partner Wallet → Ryan Yu MT5", badge(t("复核", "Review"), "amber"))}
+          </div>
+          ${stickySubmit(t("立即转账", "Transfer Now"))}
+        `,
+        withdraw: () => withdrawScreen("partner"),
+        clients: () => `
+          <div class="toolbar">
+            <button class="chip active">${t("全部", "All")}</button>
+            <button class="chip">${t("大额", "Large")}</button>
+            <button class="chip">${t("失败", "Failed")}</button>
+            <button class="chip">${t("沉默", "Quiet")}</button>
+          </div>
+          <div class="list">
+            ${clientCard("AL", "Alex Lee", "$320,400", "72%", t("出金待审", "Withdrawal Review"))}
+            ${clientCard("MW", "Mia Wang", "$188,200", "45%", t("入金待补", "Deposit Pending"))}
+            ${clientCard("RY", "Ryan Yu", "$112,600", "68%", t("新增入金", "New Deposit"))}
+            ${clientCard("SN", "Sara Ng", "$74,800", "35%", t("失败提醒", "Failed Alert"))}
+          </div>
+        `,
+        alerts: () => `
+          <div class="list">
+            ${item("Mia Wang", t("付款凭证缺少银行流水号", "Receipt missing bank reference"), badge(t("提醒", "Remind"), "amber"))}
+            ${item("Alex Lee", t("大额出金进入双人审批", "Large withdrawal needs dual approval"), badge(t("关注", "Watch"), "red"))}
+            ${item("Sara Ng", t("USDT 入金地址过期", "USDT deposit address expired"), badge(t("处理", "Handle"), "amber"))}
+          </div>
+          <button class="primary">${t("发送批量提醒", "Send Batch Reminders")}</button>
+        `,
+        records: () => `
+          <div class="list">
+            ${item("Alex Lee", "Withdrawal · 04/28", money("-$28,000", t("待审", "Review")))}
+            ${item("Mia Wang", "Deposit · 04/28", money("+$10,000", t("待补", "Pending")))}
+            ${item("Ryan Yu", "Transfer · 04/27", money("$5,000", t("实时", "Instant")))}
+          </div>
+        `,
+        profile: () => `
+          ${hero(t("返佣账户", "Rebate Account"), "$42,810.25", [t("本周", "This Week"), "$3,280"], ["Trader", "186"], true)}
+          <div class="list">
+            ${item(t("开户链接", "Referral Link"), "harvey.finance/partner/2048", badge(t("启用", "Enabled"), "green"))}
+            ${item(t("Trader 备注", "Trader Notes"), t("本月新增 24 条", "24 added this month"), badge(t("同步", "Synced"), "blue"))}
+          </div>
+        `
+      },
+      finance: {
+        queue: () => `
+          ${hero(t("待处理", "Pending"), "42", [t("入金", "Deposits"), "25"], [t("出金", "Withdrawals"), "17"], true)}
+          <div class="section-title">${t("队列", "Queue")}</div>
+          <div class="list">
+            ${item(t("入金审核", "Deposit Review"), "USD 5,000 · Alex Lee", badge(t("新", "New"), "blue"))}
+            ${item(t("出金打款", "Payout"), "USD 12,000 · Chase", badge(t("复核", "Review"), "amber"))}
+            ${item(t("异常匹配", "Match Exception"), "USD 2,400 · Reference mismatch", badge(t("异常", "Issue"), "red"))}
+          </div>
+        `,
+        depositReview: () => `
+          <div class="review-panel">
+            <div class="row"><span>Trader</span>Alex Lee</div>
+            <div class="row"><span>${t("账户", "Account")}</span>MT5-204882</div>
+            <div class="row"><span>${t("金额", "Amount")}</span>USD 5,000</div>
+            <div class="row"><span>${t("通道", "Channel")}</span>Bank Transfer</div>
+            <div class="row"><span>${t("凭证", "Receipt")}</span>receipt_0428.png</div>
+          </div>
+          <div class="split" style="margin-top:12px">
+            <button class="secondary">${t("驳回", "Reject")}</button>
+            <button class="primary" style="margin-top:0">${t("通过", "Approve")}</button>
+          </div>
+          <div class="section-title">${t("匹配结果", "Match Result")}</div>
+          <div class="list">
+            ${item(t("银行流水", "Bank Entry"), "Reference 804211", badge(t("匹配", "Matched"), "green"))}
+            ${item(t("付款人", "Payer"), "Alex Lee", badge(t("一致", "Match"), "green"))}
+          </div>
+        `,
+        payout: () => `
+          <div class="review-panel">
+            <div class="row"><span>Trader</span>Alex Lee</div>
+            <div class="row"><span>${t("金额", "Amount")}</span>USD 12,000</div>
+            <div class="row"><span>${t("银行", "Bank")}</span>Chase **** 8012</div>
+            <div class="row"><span>${t("手续费", "Fee")}</span>USD 18</div>
+            <div class="row"><span>${t("复核", "Review")}</span>Level 2</div>
+          </div>
+          <button class="primary">${t("确认打款", "Confirm Payout")}</button>
+          <div class="section-title">${t("付款批次", "Payout Batches")}</div>
+          <div class="list">
+            ${item("Batch #F-0428-03", t("5 笔 · $44,800", "5 items · $44,800"), badge(t("打开", "Open"), "blue"))}
+            ${item("Batch #F-0428-02", t("12 笔 · $96,200", "12 items · $96,200"), badge(t("完成", "Done"), "green"))}
+          </div>
+        `,
+        reconcile: () => `
+          ${hero(t("今日对账", "Today Reconciled"), "96.8%", [t("自动匹配", "Auto Match"), "284"], [t("人工处理", "Manual"), "9"])}
+          <div class="section-title">${t("异常项", "Exceptions")}</div>
+          <div class="list">
+            ${item(t("Reference 缺失", "Missing Reference"), "USD 2,400 · USDT", badge(t("处理", "Handle"), "amber"))}
+            ${item(t("金额差异", "Amount Difference"), "USD 18 · Fee", badge(t("校准", "Adjust"), "blue"))}
+            ${item(t("重复凭证", "Duplicate Receipt"), "receipt_0427.png", badge(t("锁定", "Locked"), "red"))}
+          </div>
+        `
+      },
+      risk: {
+        alerts: () => `
+          <div class="risk-score"><strong>87</strong><span>${t("风险热度", "Risk Heat")}</span></div>
+          <div class="section-title">${t("预警", "Alerts")}</div>
+          <div class="list">
+            ${item(t("大额出金", "Large Withdrawal"), "Alex Lee · USD 28,000", badge(t("高", "High"), "red"))}
+            ${item(t("频繁划转", "Frequent Transfer"), t("Wallet ⇄ Contract · 12 次", "Wallet ⇄ Contract · 12 times"), badge(t("中", "Mid"), "amber"))}
+            ${item(t("设备变更", "Device Change"), "New device · Singapore", badge(t("中", "Mid"), "amber"))}
+          </div>
+        `,
+        review: () => `
+          <div class="review-panel">
+            <div class="row"><span>${t("申请", "Request")}</span>Withdrawal</div>
+            <div class="row"><span>Trader</span>Alex Lee</div>
+            <div class="row"><span>${t("金额", "Amount")}</span>USD 28,000</div>
+            <div class="row"><span>${t("命中", "Hit")}</span>${t("大额 + 新设备", "Large + New Device")}</div>
+            <div class="row"><span>KYC</span>Verified</div>
+          </div>
+          <div class="split" style="margin-top:12px">
+            <button class="secondary">${t("冻结", "Freeze")}</button>
+            <button class="primary" style="margin-top:0">${t("放行", "Release")}</button>
+          </div>
+          <div class="section-title">${t("轨迹", "Trail")}</div>
+          <div class="list">
+            ${item(t("登录设备", "Login Device"), "iPhone 15 Pro · SG", badge(t("新", "New"), "amber"))}
+            ${item(t("历史出金", "Withdrawal History"), t("30d · 4 笔", "30d · 4 items"), badge(t("正常", "Normal"), "green"))}
+          </div>
+        `,
+        rules: () => `
+          <div class="list">
+            ${item(t("单笔出金上限", "Single Withdrawal Limit"), "Level 2 · $10,000", badge(t("启用", "On"), "green"))}
+            ${item(t("新设备冷静期", "New Device Cooldown"), "24h", badge(t("启用", "On"), "green"))}
+            ${item(t("跨实体划转", "Cross-entity Transfer"), t("人工复核", "Manual Review"), badge(t("启用", "On"), "green"))}
+            ${item(t("高频划转", "High-frequency Transfer"), t("10 次 / 24h", "10 times / 24h"), badge(t("启用", "On"), "green"))}
+          </div>
+          <button class="primary">${t("新增规则", "Add Rule")}</button>
+        `,
+        records: () => `
+          <div class="list">
+            ${item(t("放行", "Release"), "Withdrawal · Alex Lee · 14:22", badge(t("完成", "Done"), "green"))}
+            ${item(t("冻结", "Freeze"), "Transfer · Mia Wang · 13:05", badge(t("有效", "Active"), "red"))}
+            ${item(t("规则更新", "Rule Update"), t("新设备冷静期 · 11:40", "New device cooldown · 11:40"), badge(t("审计", "Audit"), "blue"))}
+          </div>
+        `,
+        profile: () => `
+          ${hero(t("风控策略", "Risk Rules"), "18", [t("启用", "Enabled"), "16"], [t("观察", "Watch"), "2"], true)}
+          <div class="list">
+            ${item(t("审批权限", "Approval Level"), "Level 3", badge(t("有效", "Valid"), "green"))}
+            ${item(t("值班", "On Duty"), "Asia / Shanghai", badge(t("在线", "Online"), "blue"))}
+          </div>
+        `
+      }
+    };
+
+    function clientCard(initials, name, assets, progress, status) {
+      const statusText = String(status).toLowerCase();
+      const statusTone = status.includes("待") || status.includes("缺") || status.includes("失败") || statusText.includes("pending") || statusText.includes("missing") || statusText.includes("failed") || statusText.includes("review") ? "amber" : "green";
+      return `
+        <div class="client-card">
+          <div class="client-head">
+            <div class="avatar-row">
+              <div class="avatar">${initials}</div>
+              <div class="item-main">
+                <strong>${name}</strong>
+                <span>${assets}</span>
+              </div>
+            </div>
+            ${badge(status, statusTone)}
+          </div>
+          <div class="progress"><b style="width:${progress}"></b></div>
+        </div>
+      `;
+    }
+
+    function currentScenes() {
+      return roles[appState.role].scenes;
+    }
+
+    function sceneName(sceneId) {
+      const found = currentScenes().find(([id]) => id === sceneId);
+      return found ? (appState.lang === "zh" ? found[1] : found[2]) : "";
+    }
+
+    function ensureScene() {
+      const ids = currentScenes().map(([id]) => id);
+      if (!ids.includes(appState.scene)) {
+        appState.scene = ids[0];
+      }
+    }
+
+    function roleKind() {
+      return appState.role === "ib" ? "partner" : "trader";
+    }
+
+    function closeDrawer() {
+      appState.activeDrawer = null;
+      renderDrawer();
+    }
+
+    function renderControls() {
+      document.documentElement.lang = appState.lang === "zh" ? "zh-CN" : "en";
+      document.body.dataset.theme = appState.theme;
+      controlTitle.textContent = t("控制面板", "Control Panel");
+      roleLabel.textContent = t("角色", "Role");
+      sceneLabel.textContent = t("场景", "Scene");
+      languageLabel.textContent = t("语言", "Language");
+      themeLabel.textContent = t("主题", "Theme");
+      accountModeLabel.textContent = t("账号情况", "Account Mode");
+
+      roleSelect.innerHTML = Object.entries(roles)
+        .map(([id, role]) => `<option value="${id}" ${id === appState.role ? "selected" : ""}>${roleName(role)}</option>`)
+        .join("");
+
+      sceneSelect.innerHTML = currentScenes()
+        .map(([id, zh, en]) => `<option value="${id}" ${id === appState.scene ? "selected" : ""}>${t(zh, en)}</option>`)
+        .join("");
+
+      languageSelect.value = appState.lang;
+      themeSelect.value = appState.theme;
+      accountModeSelect.value = appState.accountMode;
+
+      accountModeSelect.options[0].textContent = t("多个交易账号", "Multiple Accounts");
+      accountModeSelect.options[1].textContent = t("单个交易账号", "Single Account");
+
+      roleButtons.innerHTML = Object.entries(roles)
+        .map(([id, role]) => `<button type="button" data-role="${id}" class="${id === appState.role ? "active" : ""}">${roleName(role)}</button>`)
+        .join("");
+
+      panelState.textContent = `${roleName(roles[appState.role])} / ${sceneName(appState.scene)}`;
+    }
+
+    function renderTabbar() {
+      tabbar.innerHTML = roles[appState.role].tabs
+        .map(([scene, icon, zh, en]) => `
+          <button class="tab ${scene === appState.scene ? "active" : ""}" type="button" data-tab="${scene}">
+            <b>${icon}</b>
+            ${t(zh, en)}
+          </button>
+        `)
+        .join("");
+    }
+
+    function renderDrawer() {
+      const drawer = appState.activeDrawer;
+      drawerBackdrop.classList.toggle("open", Boolean(drawer));
+      bottomDrawer.classList.toggle("open", Boolean(drawer));
+
+      if (!drawer) {
+        drawerTitle.textContent = t("选择", "Select");
+        drawerList.innerHTML = "";
+        return;
+      }
+
+      const kind = roleKind();
+
+      if (drawer === "depositAccount" || drawer === "withdrawAccount") {
+        const isDeposit = drawer === "depositAccount";
+        const accounts = depositAccounts(kind);
+        const selected = isDeposit ? resolveDepositAccount(kind) : resolveWithdrawAccount(kind);
+        drawerTitle.textContent = t("交易账号", "Trading Account");
+        drawerList.innerHTML = accounts.map(([id, type, equity]) => `
+          <button class="account-option ${selected === id ? "active" : ""}" type="button" data-select-${isDeposit ? "deposit" : "withdraw"}-account="${id}">
+            <div><strong>${id}</strong><span>${type}</span></div>
+            ${money(equity, isDeposit ? t("净值", "Equity") : t("可取", "Withdrawable"))}
+          </button>
+        `).join("");
+        return;
+      }
+
+      if (drawer === "depositChannel") {
+        const channels = depositChannels(appState.depositAmount);
+        const selected = selectedDepositChannel(appState.depositAmount);
+        drawerTitle.textContent = t("通道", "Channel");
+        drawerList.innerHTML = channels.map(channel => `
+          <button class="channel-card ${selected && selected.id === channel.id ? "active" : ""} ${channel.enabled ? "" : "disabled"}" type="button" data-select-deposit-channel="${channel.id}" ${channel.enabled ? "" : "aria-disabled=\"true\""}>
+            <div><strong>${channel.name}</strong><span>${channel.currency} · $${channel.min.toLocaleString("en-US")} - $${channel.max.toLocaleString("en-US")}</span></div>
+            ${channel.enabled ? badge(t("可选", "Available"), "green") : badge(t("超限", "Blocked"), "gray")}
+          </button>
+        `).join("");
+        return;
+      }
+
+      if (drawer === "withdrawMethod") {
+        const methods = payoutMethods(kind);
+        const selected = selectedPayoutMethod(kind);
+        drawerTitle.textContent = t("收款方式", "Receiving Method");
+        drawerList.innerHTML = methods.map(method => `
+          <button class="channel-card ${selected[0] === method[0] ? "active" : ""}" type="button" data-select-withdraw-method="${method[0]}">
+            <div><strong>${method[1]}</strong><span>${method[2]} · ${t("费用", "Fee")} ${method[3]} · ${method[4]}</span></div>
+            ${badge(selected[0] === method[0] ? t("已选", "Selected") : t("可选", "Available"), selected[0] === method[0] ? "blue" : "green")}
+          </button>
+        `).join("");
+      }
+    }
+
+    function renderFlowAction() {
+      let label = "";
+      let disabled = false;
+      const kind = roleKind();
+
+      if (appState.scene === "deposit" && (appState.role === "client" || appState.role === "ib")) {
+        label = t("提交存款", "Submit Deposit");
+        disabled = !resolveDepositAccount(kind);
+      }
+
+      if (appState.scene === "withdraw" && (appState.role === "client" || appState.role === "ib")) {
+        label = t("确认取款", "Confirm Withdrawal");
+        disabled = !resolveWithdrawAccount(kind);
+      }
+
+      if (appState.scene === "transfer" && (appState.role === "client" || appState.role === "ib")) {
+        label = t("立即转账", "Transfer Now");
+      }
+
+      flowAction.classList.toggle("show", Boolean(label));
+      flowAction.innerHTML = label ? `<button class="primary" type="button" ${disabled ? "disabled" : ""}>${label}</button>` : "";
+    }
+
+    function renderScreen() {
+      ensureScene();
+      const role = roles[appState.role];
+      const renderer = screens[appState.role][appState.scene] || screens[appState.role][role.scenes[0][0]];
+      title.textContent = sceneName(appState.scene);
+      roleChip.textContent = role.chip;
+      screen.innerHTML = renderer();
+      renderTabbar();
+      renderControls();
+      renderFlowAction();
+      renderDrawer();
+    }
+
+    roleSelect.addEventListener("change", (event) => {
+      appState.role = event.target.value;
+      appState.depositEntry = "home";
+      appState.depositAccount = null;
+      appState.withdrawEntry = "home";
+      appState.withdrawAccount = null;
+      appState.activeDrawer = null;
+      ensureScene();
+      renderScreen();
+    });
+
+    sceneSelect.addEventListener("change", (event) => {
+      appState.scene = event.target.value;
+      if (appState.scene === "deposit") {
+        appState.depositEntry = "home";
+        appState.depositAccount = null;
+      }
+      if (appState.scene === "withdraw") {
+        appState.withdrawEntry = "home";
+        appState.withdrawAccount = null;
+      }
+      appState.activeDrawer = null;
+      renderScreen();
+    });
+
+    languageSelect.addEventListener("change", (event) => {
+      appState.lang = event.target.value;
+      renderScreen();
+    });
+
+    themeSelect.addEventListener("change", (event) => {
+      appState.theme = event.target.value;
+      renderScreen();
+    });
+
+    accountModeSelect.addEventListener("change", (event) => {
+      appState.accountMode = event.target.value;
+      appState.depositAccount = null;
+      appState.withdrawAccount = null;
+      renderScreen();
+    });
+
+    roleButtons.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-role]");
+      if (!button) return;
+      appState.role = button.dataset.role;
+      appState.depositEntry = "home";
+      appState.depositAccount = null;
+      appState.withdrawEntry = "home";
+      appState.withdrawAccount = null;
+      appState.activeDrawer = null;
+      ensureScene();
+      renderScreen();
+    });
+
+    tabbar.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-tab]");
+      if (!button) return;
+      appState.scene = button.dataset.tab;
+      if (appState.scene !== "deposit") {
+        appState.depositEntry = appState.scene === "tradeAccount" ? "tradeAccount" : "home";
+      }
+      if (appState.scene !== "withdraw") {
+        appState.withdrawEntry = appState.scene === "tradeAccount" ? "tradeAccount" : "home";
+      }
+      appState.activeDrawer = null;
+      renderScreen();
+    });
+
+    screen.addEventListener("click", (event) => {
+      const drawerButton = event.target.closest("[data-open-drawer]");
+      if (drawerButton) {
+        if (drawerButton.getAttribute("aria-disabled") === "true") return;
+        appState.activeDrawer = drawerButton.dataset.openDrawer;
+        renderDrawer();
+        return;
+      }
+
+      const amountButton = event.target.closest("[data-amount]");
+      if (amountButton) {
+        appState.depositAmount = Number(amountButton.dataset.amount);
+        renderScreen();
+        return;
+      }
+
+      const withdrawAmountButton = event.target.closest("[data-withdraw-amount]");
+      if (withdrawAmountButton) {
+        appState.withdrawAmount = Number(withdrawAmountButton.dataset.withdrawAmount);
+        renderScreen();
+        return;
+      }
+
+      const accountButton = event.target.closest("[data-account]");
+      if (accountButton) {
+        appState.depositAccount = accountButton.dataset.account;
+        renderScreen();
+        return;
+      }
+
+      const withdrawAccountButton = event.target.closest("[data-withdraw-account]");
+      if (withdrawAccountButton) {
+        appState.withdrawAccount = withdrawAccountButton.dataset.withdrawAccount;
+        renderScreen();
+        return;
+      }
+
+      const button = event.target.closest("[data-jump]");
+      if (!button) return;
+      appState.scene = button.dataset.jump;
+      if (appState.scene === "deposit") {
+        appState.depositEntry = button.dataset.entry || "home";
+        appState.depositAccount = appState.depositEntry === "tradeAccount" ? (button.dataset.accountId || "MT5-204882") : null;
+      }
+      if (appState.scene === "withdraw") {
+        appState.withdrawEntry = button.dataset.entry || "home";
+        appState.withdrawAccount = appState.withdrawEntry === "tradeAccount" ? (button.dataset.accountId || "MT5-204882") : null;
+      }
+      renderScreen();
+    });
+
+    drawerBackdrop.addEventListener("click", closeDrawer);
+
+    bottomDrawer.addEventListener("click", (event) => {
+      if (event.target.closest("[data-close-drawer]")) {
+        closeDrawer();
+        return;
+      }
+
+      const depositAccount = event.target.closest("[data-select-deposit-account]");
+      if (depositAccount) {
+        appState.depositAccount = depositAccount.dataset.selectDepositAccount;
+        appState.activeDrawer = null;
+        renderScreen();
+        return;
+      }
+
+      const withdrawAccount = event.target.closest("[data-select-withdraw-account]");
+      if (withdrawAccount) {
+        appState.withdrawAccount = withdrawAccount.dataset.selectWithdrawAccount;
+        appState.activeDrawer = null;
+        renderScreen();
+        return;
+      }
+
+      const depositChannel = event.target.closest("[data-select-deposit-channel]");
+      if (depositChannel) {
+        if (depositChannel.getAttribute("aria-disabled") === "true") return;
+        appState.depositChannel = depositChannel.dataset.selectDepositChannel;
+        appState.activeDrawer = null;
+        renderScreen();
+        return;
+      }
+
+      const withdrawMethod = event.target.closest("[data-select-withdraw-method]");
+      if (withdrawMethod) {
+        appState.withdrawMethod = withdrawMethod.dataset.selectWithdrawMethod;
+        appState.activeDrawer = null;
+        renderScreen();
+      }
+    });
+
+    if ("scrollRestoration" in history) {
+      history.scrollRestoration = "manual";
+    }
+
+    renderScreen();
+    window.scrollTo(0, 0);
+  </script>
+</body>
+</html>
