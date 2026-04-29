@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Open Account Bottom Sheet</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f2f4f7;
+      --phone: #ffffff;
+      --mask: rgba(0, 0, 0, .5);
+      --sheet: #ffffff;
+      --ink: #333333;
+      --sub: #666a70;
+      --soft: #f4f5f6;
+      --line: #e5e7eb;
+      --line-strong: rgba(0, 0, 0, .2);
+      --black: #18181b;
+      --teal: #68d9ee;
+      --green: #0f9f6e;
+      --amber: #b7791f;
+      --red: #dc2626;
+      --blue: #276ef1;
+      --radius-sheet: 24px;
+      --radius-control: 10px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--page);
+      color: var(--ink);
+      letter-spacing: 0;
+    }
+
+    button,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .stage {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 28px 24px;
+    }
+
+    .phone {
+      position: relative;
+      width: min(390px, calc(100vw - 24px));
+      height: min(844px, calc(100vh - 56px));
+      min-height: 700px;
+      overflow: hidden;
+      border-radius: 30px;
+      background: #eef1f4;
+      box-shadow: 0 22px 70px rgba(24, 31, 42, .22);
+    }
+
+    .phone::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, .42), rgba(255, 255, 255, 0) 28%),
+        radial-gradient(circle at 50% 24%, rgba(255, 255, 255, .52), transparent 26%);
+    }
+
+    .app-hint {
+      position: absolute;
+      inset: 48px 22px auto;
+      color: rgba(30, 35, 43, .28);
+      font-size: 18px;
+      font-weight: 760;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+
+    .mask {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      background: var(--mask);
+    }
+
+    .sheet {
+      width: 100%;
+      overflow: hidden;
+      border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+      background: var(--sheet);
+      animation: rise .32s cubic-bezier(.2, .8, .2, 1);
+    }
+
+    @keyframes rise {
+      from {
+        transform: translateY(26px);
+        opacity: .85;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .sheet-top {
+      height: 24px;
+      display: grid;
+      place-items: center;
+    }
+
+    .handle {
+      width: 40px;
+      height: 4px;
+      border-radius: 999px;
+      background: var(--line-strong);
+    }
+
+    .sheet-content {
+      padding: 22px 16px 18px;
+      display: grid;
+      justify-items: center;
+      gap: 14px;
+    }
+
+    .visual {
+      width: 160px;
+      height: 80px;
+      display: grid;
+      place-items: center;
+    }
+
+    .visual svg {
+      width: 124px;
+      height: 82px;
+      overflow: visible;
+    }
+
+    .visual [data-accent] {
+      fill: var(--teal);
+    }
+
+    .visual [data-stroke] {
+      fill: none;
+      stroke: #111820;
+      stroke-width: 2.6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .copy {
+      width: 100%;
+      display: grid;
+      gap: 8px;
+      text-align: center;
+    }
+
+    .copy h1 {
+      margin: 0;
+      color: var(--ink);
+      font-size: 24px;
+      line-height: 1.16;
+      font-weight: 720;
+    }
+
+    .copy p {
+      margin: 0 auto;
+      max-width: 330px;
+      color: var(--ink);
+      font-size: 16px;
+      line-height: 19.2px;
+      font-weight: 400;
+    }
+
+    .reason-note {
+      width: min(330px, 100%);
+      margin: 4px auto 0;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #fff7f7;
+      color: #7f1d1d;
+      font-size: 13px;
+      line-height: 1.42;
+      font-weight: 520;
+      text-align: left;
+    }
+
+    .reason-note[hidden] {
+      display: none;
+    }
+
+    .account-card {
+      width: min(330px, 100%);
+      margin: 6px auto 0;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: #ffffff;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px 12px;
+      text-align: left;
+    }
+
+    .account-card[hidden] {
+      display: none;
+    }
+
+    .account-card span {
+      color: var(--sub);
+      font-size: 12px;
+      line-height: 1.25;
+      font-weight: 560;
+    }
+
+    .account-card strong {
+      color: var(--ink);
+      font-size: 16px;
+      line-height: 1.2;
+      font-weight: 760;
+    }
+
+    .account-card em {
+      align-self: start;
+      border-radius: 999px;
+      padding: 4px 8px;
+      background: #ecfdf5;
+      color: var(--green);
+      font-size: 11px;
+      line-height: 1;
+      font-style: normal;
+      font-weight: 720;
+      white-space: nowrap;
+    }
+
+    .account-card small {
+      grid-column: 1 / -1;
+      color: var(--sub);
+      font-size: 12px;
+      line-height: 1.35;
+      font-weight: 520;
+    }
+
+    .sheet-actions {
+      width: 100%;
+      padding: 16px 16px 0;
+      display: grid;
+      gap: 10px;
+    }
+
+    .primary {
+      width: 100%;
+      min-height: 48px;
+      border-radius: 12px;
+      font-size: 18px;
+      line-height: 1;
+      font-weight: 610;
+    }
+
+    .primary {
+      border: 0;
+      background: var(--black);
+      color: #ffffff;
+    }
+
+    .primary span {
+      display: inline-block;
+      margin-left: 8px;
+      transform: translateY(-1px);
+    }
+
+    .home-indicator {
+      height: 34px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 10px;
+    }
+
+    .home-indicator::before {
+      content: "";
+      width: 134px;
+      height: 5px;
+      border-radius: 100px;
+      background: #333333;
+    }
+
+    .control-panel {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      z-index: 10;
+      width: min(348px, calc(100vw - 44px));
+      border: 1px solid rgba(222, 226, 232, .94);
+      border-radius: var(--radius-control);
+      padding: 14px;
+      background: rgba(255, 255, 255, .96);
+      box-shadow: 0 18px 54px rgba(24, 31, 42, .18);
+      backdrop-filter: blur(18px);
+    }
+
+    .control-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .control-head strong {
+      font-size: 14px;
+      font-weight: 780;
+    }
+
+    .control-head span {
+      color: var(--sub);
+      font-size: 11px;
+      font-weight: 650;
+      text-align: right;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field.wide {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      color: var(--sub);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .field select {
+      width: 100%;
+      height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 9px;
+      background: #ffffff;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 620;
+    }
+
+    .switch {
+      height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 3px;
+      background: #ffffff;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3px;
+    }
+
+    .switch button {
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--sub);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .switch button.active {
+      background: var(--black);
+      color: #ffffff;
+    }
+
+    .node-grid {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+    }
+
+    .node-grid button {
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .node-grid button.active {
+      border-color: var(--black);
+      background: var(--black);
+      color: #ffffff;
+    }
+
+    @media (max-width: 900px) {
+      .stage {
+        padding: 12px 10px 214px;
+      }
+
+      .phone {
+        height: min(844px, calc(100vh - 226px));
+        min-height: 610px;
+        border-radius: 24px;
+      }
+
+      .control-panel {
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        width: auto;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .stage {
+        padding: 0 0 214px;
+      }
+
+      .phone {
+        width: 100vw;
+        height: calc(100vh - 214px);
+        min-height: 590px;
+        border-radius: 0;
+        box-shadow: none;
+      }
+
+      .copy h1 {
+        font-size: 23px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="stage">
+    <section class="phone" aria-label="App account opening guide preview">
+      <div class="app-hint">
+        <span>9:41</span>
+        <span>5G 100%</span>
+      </div>
+      <div class="mask">
+        <section class="sheet" aria-label="Open account bottom sheet">
+          <div class="sheet-top"><div class="handle"></div></div>
+          <div class="sheet-content">
+            <div class="visual" id="visual" aria-hidden="true"></div>
+            <div class="copy">
+              <h1 id="sheetTitle"></h1>
+              <p id="sheetDesc"></p>
+              <div class="reason-note" id="failureReason" hidden></div>
+              <div class="account-card" id="accountCard" hidden></div>
+            </div>
+          </div>
+          <div class="sheet-actions">
+            <button class="primary" type="button" id="primaryAction"></button>
+          </div>
+          <div class="home-indicator"></div>
+        </section>
+      </div>
+    </section>
+
+    <aside class="control-panel" aria-label="Prototype controls">
+      <div class="control-head">
+        <strong id="panelTitle"></strong>
+        <span id="panelSummary"></span>
+      </div>
+      <div class="field-grid">
+        <div class="field wide">
+          <label for="nodeSelect" id="nodeLabel"></label>
+          <select id="nodeSelect"></select>
+        </div>
+        <div class="field">
+          <label id="demoLabel"></label>
+          <div class="switch" id="demoSwitch">
+            <button type="button" data-demo="false"></button>
+            <button type="button" data-demo="true"></button>
+          </div>
+        </div>
+        <div class="field">
+          <label id="langLabel"></label>
+          <div class="switch" id="langSwitch">
+            <button type="button" data-lang="zh">中文</button>
+            <button type="button" data-lang="en">EN</button>
+          </div>
+        </div>
+      </div>
+      <div class="node-grid" id="nodeButtons"></div>
+    </aside>
+  </main>
+
+  <script>
+    const state = {
+      node: "firstOpen",
+      demoDone: false,
+      lang: "zh"
+    };
+
+    const nodeOrder = [
+      "complianceGate",
+      "firstOpen",
+      "interrupted",
+      "reviewing",
+      "approved",
+      "failed"
+    ];
+
+    const labels = {
+      zh: {
+        panelTitle: "功能面板",
+        nodeLabel: "开户节点状态",
+        demoLabel: "Demo 交易",
+        langLabel: "语言",
+        yes: "已完成",
+        no: "未完成",
+        panelSuffix: "开户引导底部弹框",
+        nodes: {
+          complianceGate: "合规前置",
+          firstOpen: "初次开户",
+          interrupted: "开户中断",
+          reviewing: "审核中",
+          approved: "开户通过",
+          failed: "开户失败"
+        }
+      },
+      en: {
+        panelTitle: "Control Panel",
+        nodeLabel: "Account Opening Status",
+        demoLabel: "Demo Trade",
+        langLabel: "Language",
+        yes: "Done",
+        no: "Not done",
+        panelSuffix: "Bottom sheet guide",
+        nodes: {
+          complianceGate: "Compliance Gate",
+          firstOpen: "First Open",
+          interrupted: "Interrupted",
+          reviewing: "Under Review",
+          approved: "Approved",
+          failed: "Failed"
+        }
+      }
+    };
+
+    function nodeData() {
+      const demoDone = state.demoDone;
+      const data = {
+        complianceGate: {
+          icon: "open",
+          title: {
+            zh: "准备开通真实账户",
+            en: "Ready to Open Your Account"
+          },
+          desc: {
+            zh: "先完成开户资料提交，我们会在审核过程中同步检查 Demo 交易要求，帮助你顺利进入下一步。",
+            en: "Start by submitting your account information. We will check the demo trading requirement during review and guide you through the next step."
+          },
+          primary: { zh: "去开户", en: "Open Account" }
+        },
+        firstOpen: {
+          icon: "open",
+          title: {
+            zh: "开通真实交易账户",
+            en: "Open Account"
+          },
+          desc: {
+            zh: "只需几分钟提交开户资料。提交后我们会尽快审核，并在需要 Demo 交易时及时提醒你完成。",
+            en: "Submit your account information in just a few minutes. We will review it quickly and remind you if demo trading is needed."
+          },
+          primary: { zh: "开始开户", en: "Get Started" }
+        },
+        interrupted: {
+          icon: "pause",
+          title: {
+            zh: "继续完成开户",
+            en: "Continue Account Opening"
+          },
+          desc: {
+            zh: "你的开户资料还差一点就完成了，系统已保留当前进度，可以从上次中断的位置继续提交。",
+            en: "Your application is almost complete. Your progress has been saved, so you can continue where you left off."
+          },
+          primary: { zh: "继续开户", en: "Continue" }
+        },
+        reviewing: {
+          icon: "review",
+          title: {
+            zh: "开户资料审核中",
+            en: "Application Under Review"
+          },
+          desc: {
+            zh: demoDone ? "开户资料已提交，Demo 交易也已完成。我们正在审核中，通过后会第一时间通知你。" : "开户资料已提交，当前还未完成 Demo 交易。建议现在先完成 Demo，审核通过后就能更顺畅地进入真实交易。",
+            en: demoDone ? "Your application has been submitted and demo trading is complete. We are reviewing it and will notify you as soon as it is approved." : "Your application has been submitted, but demo trading is not complete yet. Complete demo trading now so live trading can start smoothly after approval."
+          },
+          primary: { zh: demoDone ? "查看审核进度" : "去 Demo 交易", en: demoDone ? "Check Progress" : "Start Demo Trade" }
+        },
+        approved: {
+          icon: demoDone ? "success" : "demo",
+          title: {
+            zh: demoDone ? "开户已通过" : "开户已通过，需先完成 Demo",
+            en: demoDone ? "Account Approved" : "Approved. Demo Required"
+          },
+          desc: {
+            zh: demoDone ? "真实交易账户已开通，可以入金并开始交易。祝你交易顺利。" : "开户审核已通过。根据合规要求，请先完成 Demo 交易，完成后即可进入真实交易。",
+            en: demoDone ? "Your live account is ready. You can deposit funds and start trading." : "Your application has been approved. Please complete demo trading first, then live trading access will be available."
+          },
+          account: demoDone ? {
+            label: { zh: "外汇衍生品交易账号", en: "Forex Derivatives Trading Account" },
+            number: "MT5-204882",
+            status: { zh: "已开通", en: "Opened" },
+            meta: { zh: "标准账户 · USD · Live-01 服务器", en: "Standard · USD · Live-01 Server" }
+          } : null,
+          primary: { zh: demoDone ? "入金并交易" : "去 Demo 交易", en: demoDone ? "Deposit & Trade" : "Start Demo Trade" }
+        },
+        failed: {
+          icon: "failed",
+          title: {
+            zh: "开户资料审核未通过",
+            en: "Application Not Approved"
+          },
+          desc: {
+            zh: "这次资料暂未通过审核。请根据下方原因修改后再次提交，我们会为你继续处理。",
+            en: "Your application was not approved this time. Please update the information below and submit again."
+          },
+          reason: {
+            zh: "失败原因：身份证件照片边缘不完整，居住地址证明超过 3 个月有效期。",
+            en: "Reason: The ID image is cropped, and proof of address is older than 3 months."
+          },
+          primary: { zh: "重新提交开户资料", en: "Resubmit Application" }
+        }
+      };
+
+      return data[state.node];
+    }
+
+    function iconSvg(type) {
+      const middle = {
+        open: '<path data-accent d="M42 28c0-12 9.7-21.8 21.7-21.8s21.7 9.8 21.7 21.8v7.3l10.2 10.3H70.8c-2.3.8-4.7 1.2-7.1 1.2C51.7 46.8 42 40 42 28Z"/><circle data-stroke cx="64" cy="23" r="7.8"/><path data-stroke d="M50.5 43.5c1.8-8 6.4-12 13.3-12 4.9 0 8.6 1.8 11.1 5.3"/><path data-stroke d="M79.5 33.5v16M71.5 41.5h16"/>',
+        demo: '<path data-accent d="M38 43.5c4.3-20.5 15.7-31 34.2-31 8.3 0 14.7 2 19.2 6v33h-53.4v-8Z"/><path data-stroke d="M46 45l12-13 9 8 17-20"/><path data-stroke d="M42 56.5h58"/><path data-stroke d="M42 24v32h58"/>',
+        pause: '<path data-accent d="M42 18h46a10 10 0 0 1 10 10v20a10 10 0 0 1-10 10H42a10 10 0 0 1-10-10V28a10 10 0 0 1 10-10Z"/><path data-stroke d="M58 30v17M75 30v17"/><path data-stroke d="M35 62h60"/>',
+        review: '<path data-accent d="M45 11h38l13 13v37H45z"/><path data-stroke d="M45 11h38l13 13v37H45z"/><path data-stroke d="M81 12v14h14"/><path data-stroke d="M55 35h30M55 46h22"/><circle data-stroke cx="88" cy="58" r="12"/><path data-stroke d="M97 67l8 8"/>',
+        success: '<circle data-accent cx="68" cy="36" r="28"/><circle data-stroke cx="68" cy="36" r="28"/><path data-stroke d="M54 36l10 10 20-22"/><path data-stroke d="M35 70h66"/>',
+        failed: '<circle data-accent cx="68" cy="36" r="28"/><circle data-stroke cx="68" cy="36" r="28"/><path data-stroke d="M57 25l22 22M79 25 57 47"/><path data-stroke d="M35 70h66"/>'
+      }[type];
+
+      return `
+        <svg viewBox="0 0 136 82" role="img">
+          <path data-stroke d="M25 18c-8 10-8 28 0 38M17 10c-13 17-13 43 0 60" opacity=".9"/>
+          ${middle}
+          <path data-stroke d="M111 18c8 10 8 28 0 38M119 10c13 17 13 43 0 60" opacity=".9"/>
+        </svg>
+      `;
+    }
+
+    function render() {
+      const data = nodeData();
+      const lang = state.lang;
+      const nodeNames = labels[lang].nodes;
+
+      document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+      document.querySelector("#visual").innerHTML = iconSvg(data.icon);
+      document.querySelector("#sheetTitle").textContent = data.title[lang];
+      document.querySelector("#sheetDesc").textContent = data.desc[lang];
+      const failureReason = document.querySelector("#failureReason");
+      failureReason.textContent = data.reason ? data.reason[lang] : "";
+      failureReason.hidden = !data.reason;
+      const accountCard = document.querySelector("#accountCard");
+      if (data.account) {
+        accountCard.innerHTML = `
+          <div>
+            <span>${data.account.label[lang]}</span>
+            <strong>${data.account.number}</strong>
+          </div>
+          <em>${data.account.status[lang]}</em>
+          <small>${data.account.meta[lang]}</small>
+        `;
+        accountCard.hidden = false;
+      } else {
+        accountCard.innerHTML = "";
+        accountCard.hidden = true;
+      }
+
+      document.querySelector("#primaryAction").innerHTML = `${data.primary[lang]}<span>→</span>`;
+
+      document.querySelector("#panelTitle").textContent = labels[lang].panelTitle;
+      document.querySelector("#nodeLabel").textContent = labels[lang].nodeLabel;
+      document.querySelector("#demoLabel").textContent = labels[lang].demoLabel;
+      document.querySelector("#langLabel").textContent = labels[lang].langLabel;
+      document.querySelector("#panelSummary").textContent = `${nodeNames[state.node]} / ${labels[lang].panelSuffix}`;
+
+      const nodeSelect = document.querySelector("#nodeSelect");
+      nodeSelect.innerHTML = nodeOrder.map((id) => `<option value="${id}" ${id === state.node ? "selected" : ""}>${nodeNames[id]}</option>`).join("");
+
+      document.querySelectorAll("[data-demo]").forEach((button) => {
+        const isDone = button.dataset.demo === "true";
+        button.textContent = isDone ? labels[lang].yes : labels[lang].no;
+        button.classList.toggle("active", isDone === state.demoDone);
+      });
+
+      document.querySelectorAll("[data-lang]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.lang === state.lang);
+      });
+
+      document.querySelector("#nodeButtons").innerHTML = nodeOrder.map((id) => `
+        <button type="button" data-node="${id}" class="${id === state.node ? "active" : ""}">${nodeNames[id]}</button>
+      `).join("");
+    }
+
+    document.querySelector("#nodeSelect").addEventListener("change", (event) => {
+      state.node = event.target.value;
+      render();
+    });
+
+    document.querySelector("#demoSwitch").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-demo]");
+      if (!button) return;
+      state.demoDone = button.dataset.demo === "true";
+      render();
+    });
+
+    document.querySelector("#langSwitch").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-lang]");
+      if (!button) return;
+      state.lang = button.dataset.lang;
+      render();
+    });
+
+    document.querySelector("#nodeButtons").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-node]");
+      if (!button) return;
+      state.node = button.dataset.node;
+      render();
+    });
+
+    document.querySelector("#primaryAction").addEventListener("click", () => {
+      if (state.node === "complianceGate") {
+        state.node = "firstOpen";
+      } else if ((state.node === "reviewing" || state.node === "approved") && !state.demoDone) {
+        state.demoDone = true;
+      } else if (state.node === "failed") {
+        state.node = "interrupted";
+      } else if (state.node === "firstOpen" || state.node === "interrupted") {
+        state.node = "reviewing";
+      } else if (state.node === "reviewing") {
+        state.node = "approved";
+      }
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
