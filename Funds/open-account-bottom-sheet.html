@@ -97,10 +97,13 @@
 
     .sheet {
       width: 100%;
+      max-height: 100%;
       overflow: hidden;
       border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
       background: var(--sheet);
       animation: rise .32s cubic-bezier(.2, .8, .2, 1);
+      display: flex;
+      flex-direction: column;
     }
 
     @keyframes rise {
@@ -117,6 +120,7 @@
 
     .sheet-top {
       height: 24px;
+      flex: 0 0 auto;
       display: grid;
       place-items: center;
     }
@@ -129,6 +133,9 @@
     }
 
     .sheet-content {
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
       padding: 22px 16px 18px;
       display: grid;
       justify-items: center;
@@ -201,6 +208,112 @@
       display: none;
     }
 
+    .tips-card {
+      width: min(330px, 100%);
+      margin: 6px auto 0;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: #ffffff;
+      display: grid;
+      gap: 9px;
+      text-align: left;
+    }
+
+    .tips-card[hidden] {
+      display: none;
+    }
+
+    .tips-card ul {
+      display: grid;
+      gap: 7px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .tips-card li {
+      position: relative;
+      padding-left: 18px;
+      color: var(--ink);
+      font-size: 13px;
+      line-height: 1.38;
+      font-weight: 540;
+    }
+
+    .tips-card li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: .56em;
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--teal);
+      box-shadow: 0 0 0 2px rgba(104, 217, 238, .22);
+    }
+
+    .tips-card button {
+      width: max-content;
+      border: 0;
+      padding: 0;
+      background: transparent;
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 680;
+      text-align: left;
+    }
+
+    .info-card {
+      width: min(330px, 100%);
+      margin: 6px auto 0;
+      display: grid;
+      gap: 8px;
+      text-align: left;
+    }
+
+    .info-card[hidden] {
+      display: none;
+    }
+
+    .info-item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: #ffffff;
+      display: grid;
+      gap: 4px;
+    }
+
+    .info-item strong {
+      color: var(--ink);
+      font-size: 13px;
+      line-height: 1.3;
+      font-weight: 720;
+    }
+
+    .info-item span {
+      color: var(--sub);
+      font-size: 12px;
+      line-height: 1.42;
+      font-weight: 520;
+    }
+
+    .info-item ul {
+      display: grid;
+      gap: 4px;
+      margin: 2px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .info-item li {
+      color: var(--sub);
+      font-size: 12px;
+      line-height: 1.38;
+      font-weight: 540;
+    }
+
     .account-card {
       width: min(330px, 100%);
       margin: 6px auto 0;
@@ -255,6 +368,7 @@
 
     .sheet-actions {
       width: 100%;
+      flex: 0 0 auto;
       padding: 16px 16px 0;
       display: grid;
       gap: 10px;
@@ -295,6 +409,7 @@
 
     .home-indicator {
       height: 34px;
+      flex: 0 0 auto;
       display: flex;
       align-items: flex-end;
       justify-content: center;
@@ -479,6 +594,8 @@
               <h1 id="sheetTitle"></h1>
               <p id="sheetDesc"></p>
               <div class="reason-note" id="failureReason" hidden></div>
+              <div class="tips-card" id="tipsCard" hidden></div>
+              <div class="info-card" id="infoCard" hidden></div>
               <div class="account-card" id="accountCard" hidden></div>
             </div>
           </div>
@@ -512,6 +629,10 @@
           <label for="nodeSelect" id="nodeLabel"></label>
           <select id="nodeSelect"></select>
         </div>
+        <div class="field wide">
+          <label for="triggerSceneSelect" id="triggerSceneLabel"></label>
+          <select id="triggerSceneSelect"></select>
+        </div>
         <div class="field">
           <label id="demoLabel"></label>
           <div class="switch" id="demoSwitch">
@@ -528,6 +649,8 @@
     const state = {
       flowType: "account",
       node: "account_init",
+      returnNode: "video_init",
+      triggerScene: "general",
       demoDone: false,
       lang: "zh"
     };
@@ -537,6 +660,7 @@
         panelTitle: "功能面板",
         flowLabel: "流程类型",
         nodeLabel: "反馈节点",
+        triggerSceneLabel: "触发场景",
         demoLabel: "Demo 交易",
         langLabel: "语言",
         yes: "已完成",
@@ -547,6 +671,7 @@
         panelTitle: "Control Panel",
         flowLabel: "Flow Type",
         nodeLabel: "Feedback Node",
+        triggerSceneLabel: "Trigger Scene",
         demoLabel: "Demo Trade",
         langLabel: "Language",
         yes: "Done",
@@ -564,30 +689,19 @@
           "account_agreement_exit",
           "account_reviewing",
           "account_approved",
-          "account_failed_unclear",
-          "account_failed_mismatch",
-          "account_failed_unavailable"
+          "account_failed"
         ]
       },
       video: {
         label: { zh: "视频认证", en: "Video Verification" },
         nodes: [
-          "video_add_account_required",
-          "video_deposit_required",
-          "video_balance_required",
-          "video_withdraw_required",
+          "video_init",
+          "video_help",
+          "video_required",
           "video_reviewing",
           "video_application_waiting",
-          "video_completed_general",
-          "video_completed_deposit",
-          "video_completed_withdrawal",
-          "video_completed_add_account",
-          "video_failed_short",
-          "video_failed_multiple_people",
-          "video_failed_face",
-          "video_failed_statement",
-          "video_failed_identity",
-          "video_failed_support"
+          "video_completed",
+          "video_failed"
         ]
       }
     };
@@ -613,25 +727,134 @@
         account_agreement_exit: text("退出协议签署", "Exit Agreement"),
         account_reviewing: text("开户审核中", "Application Review"),
         account_approved: text("开户成功", "Approved"),
-        account_failed_unclear: text("失败：文件不清晰", "Failed: Unclear File"),
-        account_failed_mismatch: text("失败：信息不一致", "Failed: Mismatch"),
-        account_failed_unavailable: text("失败：暂无法开户", "Unavailable"),
-        video_add_account_required: text("添加账户前认证", "Before Adding Account"),
-        video_deposit_required: text("存款需认证", "Deposit Verification"),
-        video_balance_required: text("补充认证", "Additional Verification"),
-        video_withdraw_required: text("取款前认证", "Before Withdrawal"),
+        account_failed: text("开户失败", "Application Not Approved"),
+        video_init: text("初始化", "Start"),
+        video_help: text("为什么需要认证", "Why Required"),
+        video_required: text("需要视频认证", "Verification Required"),
         video_reviewing: text("视频审核中", "Video Review"),
         video_application_waiting: text("开户等待认证", "Application Waiting"),
-        video_completed_general: text("视频认证通过", "Verification Completed"),
-        video_completed_deposit: text("存款认证通过", "Deposit Verification Done"),
-        video_completed_withdrawal: text("取款认证通过", "Withdrawal Verification Done"),
-        video_completed_add_account: text("添加账户认证通过", "Add Account Verification Done"),
-        video_failed_short: text("失败：时长不足", "Failed: Too Short"),
-        video_failed_multiple_people: text("失败：多人入镜", "Failed: Multiple People"),
-        video_failed_face: text("失败：人脸不清晰", "Failed: Face Unclear"),
-        video_failed_statement: text("失败：朗读不匹配", "Failed: Statement Mismatch"),
-        video_failed_identity: text("失败：身份未确认", "Failed: Identity"),
-        video_failed_support: text("失败：联系客服", "Failed: Support")
+        video_completed: text("视频认证通过", "Verification Completed"),
+        video_failed: text("视频认证失败", "Video Verification Failed")
+      };
+    }
+
+    const videoScenes = {
+      general: {
+        label: text("通用操作", "General Action"),
+        required: {
+          title: text("需要完成视频认证", "Video Verification Required"),
+          desc: text("为继续当前操作，请先完成视频认证。认证通过后，您可以回到刚才的操作继续处理。", "To continue your current action, please complete video verification first. Once approved, you can return to the action you started."),
+          error: text("认证通过前，相关操作可能暂时无法继续。", "The related action may be temporarily unavailable until verification is approved."),
+          primary: text("开始视频认证", "Start Video Verification"),
+          secondary: text("稍后处理", "Do It Later")
+        },
+        completed: {
+          title: text("视频认证已通过", "Video Verification Completed"),
+          desc: text("您的视频认证已通过。现在可以继续完成刚才的操作。", "Your video verification has been approved. You can now continue your previous action."),
+          primary: text("继续操作", "Continue")
+        }
+      },
+      addAccount: {
+        label: text("添加交易账号", "Add Trading Account"),
+        required: {
+          title: text("添加账户前需要认证", "Verification Required Before Adding Account"),
+          desc: text("请先完成视频认证，然后再添加新的交易账号。", "Please complete video verification before adding another trading account."),
+          error: text("视频认证通过前，暂时无法添加新的交易账号。", "You can’t add another trading account until video verification is approved."),
+          primary: text("开始认证", "Start Verification"),
+          secondary: text("稍后处理", "Do It Later")
+        },
+        completed: {
+          title: text("认证已通过", "Verification Completed"),
+          desc: text("您的视频认证已通过。现在可以继续添加新的交易账号。", "Your video verification has been approved. You can now continue adding another trading account."),
+          primary: text("继续添加账户", "Continue Adding Account")
+        }
+      },
+      deposit: {
+        label: text("处理存款", "Process Deposit"),
+        required: {
+          title: text("需要完成视频认证", "Video Verification Required"),
+          desc: text("为继续处理本次存款，请完成视频认证。认证通过后，资金将继续处理。", "To continue processing this deposit, please complete video verification. Once approved, your deposit will continue to be processed."),
+          error: text("视频认证完成前，该笔存款可能暂时不会入账。", "This deposit may not be credited until video verification is completed."),
+          primary: text("开始视频认证", "Start Video Verification"),
+          secondary: text("查看存款记录", "View Deposit Record")
+        },
+        completed: {
+          title: text("认证已通过", "Verification Completed"),
+          desc: text("您的视频认证已通过。我们将继续处理您的存款。", "Your video verification has been approved. We’ll continue processing your deposit."),
+          primary: text("查看存款记录", "View Deposit Record")
+        }
+      },
+      balance: {
+        label: text("恢复完整账户功能", "Restore Account Features"),
+        required: {
+          title: text("需要补充认证", "Additional Verification Required"),
+          desc: text("您的账户已达到认证限制。请完成视频认证，以继续使用完整账户功能。", "Your account has reached a verification limit. Please complete video verification to continue using all account features."),
+          error: text("在认证通过前，部分账户功能可能暂时不可用。", "Some account features may be temporarily unavailable until verification is approved."),
+          primary: text("完成认证", "Complete Verification"),
+          secondary: text("了解更多", "Learn More")
+        },
+        completed: {
+          title: text("认证已通过", "Verification Completed"),
+          desc: text("您的视频认证已通过。现在可以继续使用完整账户功能。", "Your video verification has been approved. You can now continue using all account features."),
+          primary: text("继续使用账户", "Continue")
+        }
+      },
+      withdrawal: {
+        label: text("提交取款", "Submit Withdrawal"),
+        required: {
+          title: text("取款前需要认证", "Verification Required Before Withdrawal"),
+          desc: text("为保障账户安全并满足账户要求，请先完成视频认证。", "To protect your account and meet account requirements, please complete video verification first."),
+          error: text("视频认证通过前，暂时无法提交取款申请。", "Withdrawals are temporarily unavailable until video verification is approved."),
+          primary: text("立即认证", "Verify Now"),
+          secondary: text("返回", "Back")
+        },
+        completed: {
+          title: text("认证已通过", "Verification Completed"),
+          desc: text("您的视频认证已通过。现在可以继续提交取款申请。", "Your video verification has been approved. You can now continue submitting your withdrawal request."),
+          primary: text("继续取款", "Continue Withdrawal")
+        }
+      },
+      application: {
+        label: text("继续开户流程", "Continue Application"),
+        required: {
+          title: text("开户前需要完成视频认证", "Video Verification Required"),
+          desc: text("为继续处理开户流程，请先完成视频认证。认证通过后，开户流程将继续处理。", "To continue your account application, please complete video verification first. Once approved, your application will continue."),
+          error: text("视频认证通过前，开户流程可能暂时无法继续。", "Your account application may be temporarily paused until video verification is approved."),
+          primary: text("开始视频认证", "Start Video Verification"),
+          secondary: text("查看开户进度", "View Application Status")
+        },
+        completed: {
+          title: text("认证已通过", "Verification Completed"),
+          desc: text("您的视频认证已通过。开户流程将继续处理，您可以查看最新进度。", "Your video verification has been approved. Your application will continue, and you can check the latest status."),
+          primary: text("查看开户进度", "View Application Status")
+        }
+      }
+    };
+
+    function setVideoScene(scene) {
+      state.triggerScene = videoScenes[scene] ? scene : "general";
+    }
+
+    function videoCompletedData() {
+      const scene = videoScenes[state.triggerScene] || videoScenes.general;
+      return {
+        icon: "success",
+        title: scene.completed.title,
+        desc: scene.completed.desc,
+        primary: scene.completed.primary,
+        secondary: text("返回首页", "Back to Home")
+      };
+    }
+
+    function videoRequiredData() {
+      const scene = videoScenes[state.triggerScene] || videoScenes.general;
+      return {
+        icon: "demo",
+        title: scene.required.title,
+        desc: scene.required.desc,
+        error: scene.required.error,
+        primary: scene.required.primary,
+        secondary: scene.required.secondary
       };
     }
 
@@ -684,62 +907,68 @@
           primary: demoDone ? text("去存款", "Make a Deposit") : text("去完成 Demo 交易", "Start Demo Trading"),
           secondary: demoDone ? text("查看交易账号", "View Trading Account") : text("查看开户进度", "View Status")
         },
-        account_failed_unclear: {
+        account_failed: {
           icon: "failed",
-          title: text("资料未通过审核", "Application Not Approved"),
-          desc: text("部分资料无法完成验证，请根据提示重新提交。", "Some information could not be verified. Please update and submit again."),
-          error: text("上传文件不清晰，或证件信息无法识别。", "The uploaded file is unclear, or the identity information could not be recognized."),
+          title: text("开户资料未通过审核", "Application Not Approved"),
+          desc: text("部分开户资料需要补充或修正。请根据页面提示检查后重新提交，我们会继续为您处理。", "Some account opening information needs to be updated. Please follow the page prompts, submit again, and we’ll continue processing your application."),
+          error: text("请返回开户资料页查看具体提示，并确认信息真实、完整、清晰。", "Please return to the application page to view the details, and make sure the information is accurate, complete, and clear."),
           primary: text("重新提交资料", "Resubmit Information"),
           secondary: text("联系客服", "Contact Support")
         },
-        account_failed_mismatch: {
-          icon: "failed",
-          title: text("资料信息不一致", "Information Does Not Match"),
-          desc: text("您提交的资料与填写信息存在不一致，请检查后重新提交。", "The submitted documents do not match the information provided. Please check and submit again."),
-          error: text("请检查姓名、证件号码、出生日期或证件有效期是否正确。", "Please check your name, ID number, date of birth, or document expiry date."),
-          primary: text("修改资料", "Update Information"),
-          secondary: text("联系客服", "Contact Support")
-        },
-        account_failed_unavailable: {
-          icon: "failed",
-          title: text("暂无法开通账户", "Account Opening Unavailable"),
-          desc: text("很抱歉，您当前提交的信息暂不符合开户要求。", "Unfortunately, the information submitted does not currently meet the account opening requirements."),
-          error: text("当前资料暂不符合开户要求。", "The submitted information does not meet the account opening requirements."),
-          primary: text("查看详情", "View Details"),
-          secondary: text("联系客服", "Contact Support")
-        },
-        video_add_account_required: {
-          icon: "demo",
-          title: text("添加账户前需要认证", "Verification Required Before Adding Account"),
-          desc: text("请先完成视频认证，然后再添加新的交易账号。", "Please complete video verification before adding another trading account."),
-          error: text("视频认证通过前，暂时无法添加新的交易账号。", "You can’t add another trading account until video verification is approved."),
-          primary: text("开始认证", "Start Verification"),
-          secondary: text("稍后处理", "Do It Later")
-        },
-        video_deposit_required: {
+        video_init: {
           icon: "demo",
           title: text("需要完成视频认证", "Video Verification Required"),
-          desc: text("为继续处理本次存款，请完成视频认证。认证通过后，资金将继续处理。", "To continue processing this deposit, please complete video verification. Once approved, your deposit will continue to be processed."),
-          error: text("视频认证完成前，该笔存款可能暂时不会入账。", "This deposit may not be credited until video verification is completed."),
+          desc: text("根据印尼监管要求，请完成一段简短的视频认证，以确认账户由您本人申请和使用。认证通过后，您可以继续开户或使用相关账户功能。", "In accordance with Indonesian regulatory requirements, please complete a short video verification to confirm that the account is being opened and used by you. Once approved, you can continue your application or use the related account features."),
+          error: text("完成认证前，部分账户功能可能暂时不可用。", "Some account features may be temporarily unavailable until verification is completed."),
+          tips: [
+            text("请确保本人单独入镜", "Make sure only you appear in the video"),
+            text("请在光线充足的环境中录制", "Record in a well-lit environment"),
+            text("请按照页面提示清晰朗读内容", "Read the statement clearly as shown on the screen")
+          ],
+          help: text("为什么需要认证？", "Why is this required?"),
           primary: text("开始视频认证", "Start Video Verification"),
-          secondary: text("查看存款记录", "View Deposit Record")
+          secondary: text("稍后完成", "Do It Later")
         },
-        video_balance_required: {
+        video_help: {
           icon: "demo",
-          title: text("需要补充认证", "Additional Verification Required"),
-          desc: text("您的账户已达到认证限制。请完成视频认证，以继续使用完整账户功能。", "Your account has reached a verification limit. Please complete video verification to continue using all account features."),
-          error: text("在认证通过前，部分账户功能可能暂时不可用。", "Some account features may be temporarily unavailable until verification is approved."),
-          primary: text("完成认证", "Complete Verification"),
-          secondary: text("了解更多", "Learn More")
-        },
-        video_withdraw_required: {
-          icon: "demo",
-          title: text("取款前需要认证", "Verification Required Before Withdrawal"),
-          desc: text("为保障账户安全并满足账户要求，请先完成视频认证。", "To protect your account and meet account requirements, please complete video verification first."),
-          error: text("视频认证通过前，暂时无法提交取款申请。", "Withdrawals are temporarily unavailable until video verification is approved."),
-          primary: text("立即认证", "Verify Now"),
+          title: text("为什么需要视频认证？", "Why Is Video Verification Required?"),
+          desc: text("视频认证用于满足印尼监管要求，并确认账户由您本人申请和使用。", "Video verification is used to meet Indonesian regulatory requirements and confirm that the account is being opened and used by you."),
+          info: [
+            {
+              title: text("为什么需要认证", "Why Verification Is Required"),
+              body: text("根据印尼相关监管要求，平台需要在开户或特定账户操作前确认用户身份、账户申请意愿及相关风险声明。", "In accordance with Indonesian regulatory requirements, the platform needs to confirm your identity, account application intent, and related risk acknowledgement before account opening or certain account actions.")
+            },
+            {
+              title: text("视频认证会确认什么", "What Video Verification Confirms"),
+              items: [
+                text("是否为账户本人进行认证", "Whether the account holder is completing the verification"),
+                text("视频中的人脸是否与身份资料一致", "Whether the face in the video matches the identity information"),
+                text("是否按页面要求完成朗读内容", "Whether the statement is read as shown on the screen"),
+                text("是否确认账户申请和使用意愿", "Whether account application and usage intent is confirmed")
+              ]
+            },
+            {
+              title: text("认证前请准备", "Before You Start"),
+              items: [
+                text("本人单独入镜", "Only you appear in the video"),
+                text("光线充足", "A well-lit environment"),
+                text("清晰朗读", "Read clearly"),
+                text("网络稳定", "A stable network connection")
+              ]
+            },
+            {
+              title: text("未完成认证会影响什么", "What Happens If Verification Is Not Completed"),
+              body: text("在视频认证完成前，部分账户功能可能暂时不可用，例如继续开户、添加新的交易账号、提交取款申请或处理部分存款。", "Until video verification is completed, some account features may be temporarily unavailable, such as continuing an application, adding a new trading account, submitting a withdrawal request, or processing certain deposits.")
+            },
+            {
+              title: text("我们如何使用您的视频资料", "How We Use Your Video Information"),
+              body: text("您的视频资料仅用于身份确认、账户申请确认、合规审核及账户安全目的。", "Your video information is used only for identity confirmation, account application confirmation, compliance review, and account security purposes.")
+            }
+          ],
+          primary: text("开始视频认证", "Start Video Verification"),
           secondary: text("返回", "Back")
         },
+        video_required: videoRequiredData(),
         video_reviewing: {
           icon: "review",
           title: text("视频认证审核中", "Video Verification Under Review"),
@@ -752,83 +981,17 @@
           title: text("开户流程等待认证结果", "Application Waiting for Verification"),
           desc: text("您的视频认证已提交。认证通过后，开户流程将继续处理。", "Your video verification has been submitted. Your application will continue once verification is approved."),
           primary: text("查看开户进度", "View Application Status"),
-          secondary: text("返回首页", "Back to Home")
+          secondary: text("返回首页", "Back to Home"),
+          triggerScene: "application"
         },
-        video_completed_general: {
-          icon: "success",
-          title: text("视频认证已通过", "Video Verification Completed"),
-          desc: text("您的视频认证已通过。现在可以继续完成刚才的操作。", "Your video verification has been approved. You can now continue your previous action."),
-          primary: text("继续操作", "Continue"),
-          secondary: text("返回首页", "Back to Home")
-        },
-        video_completed_deposit: {
-          icon: "success",
-          title: text("认证已通过", "Verification Completed"),
-          desc: text("您的视频认证已通过。我们将继续处理您的存款。", "Your video verification has been approved. We’ll continue processing your deposit."),
-          primary: text("查看存款记录", "View Deposit Record"),
-          secondary: text("返回首页", "Back to Home")
-        },
-        video_completed_withdrawal: {
-          icon: "success",
-          title: text("认证已通过", "Verification Completed"),
-          desc: text("您的视频认证已通过。现在可以继续提交取款申请。", "Your video verification has been approved. You can now continue submitting your withdrawal request."),
-          primary: text("继续取款", "Continue Withdrawal"),
-          secondary: text("返回首页", "Back to Home")
-        },
-        video_completed_add_account: {
-          icon: "success",
-          title: text("认证已通过", "Verification Completed"),
-          desc: text("您的视频认证已通过。现在可以继续添加新的交易账号。", "Your video verification has been approved. You can now continue adding another trading account."),
-          primary: text("继续添加账户", "Continue Adding Account"),
-          secondary: text("返回首页", "Back to Home")
-        },
-        video_failed_short: {
+        video_completed: videoCompletedData(),
+        video_failed: {
           icon: "failed",
           title: text("视频认证未通过", "Video Verification Not Approved"),
-          desc: text("本次视频认证未能通过，请根据提示重新录制。", "This video verification could not be approved. Please follow the instructions and record again."),
-          error: text("视频时长不足，请完整录制后重新提交。", "The video is too short. Please complete the full recording and submit again."),
-          primary: text("重新录制", "Record Again"),
-          secondary: text("查看录制要求", "View Requirements")
-        },
-        video_failed_multiple_people: {
-          icon: "failed",
-          title: text("请保持本人单独入镜", "Only One Person Should Appear"),
-          desc: text("视频认证需要确认账户由本人操作，请确保画面中只有您本人。", "To confirm the account is operated by you, please make sure only you appear in the video."),
-          error: text("检测到画面中可能有多个人，请重新录制。", "Multiple people may have been detected. Please record again."),
-          primary: text("重新录制", "Record Again"),
-          secondary: text("查看示例", "View Example")
-        },
-        video_failed_face: {
-          icon: "failed",
-          title: text("未检测到清晰人脸", "Face Not Clearly Detected"),
-          desc: text("请正对摄像头，保持面部完整出现在画面中，并避免遮挡。", "Please face the camera directly, keep your full face in the frame, and avoid covering your face."),
-          error: text("当前视频中的人脸不够清晰，请重新录制。", "Your face was not clear enough in the video. Please record again."),
-          primary: text("重新录制", "Record Again"),
-          secondary: text("查看示例", "View Example")
-        },
-        video_failed_statement: {
-          icon: "failed",
-          title: text("朗读内容不匹配", "Spoken Statement Does Not Match"),
-          desc: text("请按照页面显示的内容清晰朗读，不要增减或替换文字。", "Please read the statement shown on the screen clearly without changing, adding, or skipping words."),
-          error: text("系统未能确认您朗读的内容与页面文本一致。", "We couldn’t confirm that your spoken statement matched the required text."),
-          primary: text("重新录制", "Record Again"),
-          secondary: text("查看示例", "View Example")
-        },
-        video_failed_identity: {
-          icon: "failed",
-          title: text("身份确认未通过", "Identity Could Not Be Verified"),
-          desc: text("本次视频认证未能确认与您的身份资料一致，请重新录制或联系客服。", "We couldn’t confirm that this video matches your identity information. Please record again or contact support."),
-          error: text("视频中的人脸与身份资料未能完成匹配。", "The face in the video could not be matched with the identity information."),
+          desc: text("本次视频认证暂未通过。请按页面录制要求重新提交，或联系客服协助处理。", "This video verification was not approved. Please follow the recording instructions and submit again, or contact support for help."),
+          error: text("重新录制时，请确保本人单独入镜、面部清晰，并按页面提示完整完成认证。", "When recording again, make sure only you appear, your face is clear, and the verification is completed as instructed."),
           primary: text("重新录制", "Record Again"),
           secondary: text("联系客服", "Contact Support")
-        },
-        video_failed_support: {
-          icon: "failed",
-          title: text("视频认证暂未通过", "Video Verification Not Approved"),
-          desc: text("本次认证暂未通过。如您认为信息无误，可以联系客服协助处理。", "Your verification could not be approved at this time. If you believe the information is correct, please contact support for assistance."),
-          error: text("我们无法确认本次视频认证符合要求。", "We couldn’t confirm that this video verification met the requirements."),
-          primary: text("联系客服", "Contact Support"),
-          secondary: text("重新录制", "Record Again")
         }
       };
 
@@ -867,6 +1030,30 @@
       const failureReason = document.querySelector("#failureReason");
       failureReason.textContent = data.error ? data.error[lang] : "";
       failureReason.hidden = !data.error;
+      const tipsCard = document.querySelector("#tipsCard");
+      if (data.tips || data.help) {
+        const tips = data.tips ? `<ul>${data.tips.map((tip) => `<li>${tip[lang]}</li>`).join("")}</ul>` : "";
+        const help = data.help ? `<button type="button" data-help-video>${data.help[lang]}</button>` : "";
+        tipsCard.innerHTML = `${tips}${help}`;
+        tipsCard.hidden = false;
+      } else {
+        tipsCard.innerHTML = "";
+        tipsCard.hidden = true;
+      }
+      const infoCard = document.querySelector("#infoCard");
+      if (data.info) {
+        infoCard.innerHTML = data.info.map((item) => `
+          <div class="info-item">
+            <strong>${item.title[lang]}</strong>
+            ${item.body ? `<span>${item.body[lang]}</span>` : ""}
+            ${item.items ? `<ul>${item.items.map((entry) => `<li>✓ ${entry[lang]}</li>`).join("")}</ul>` : ""}
+          </div>
+        `).join("");
+        infoCard.hidden = false;
+      } else {
+        infoCard.innerHTML = "";
+        infoCard.hidden = true;
+      }
       const accountCard = document.querySelector("#accountCard");
       if (data.account) {
         accountCard.innerHTML = `
@@ -891,6 +1078,7 @@
       document.querySelector("#panelTitle").textContent = labels[lang].panelTitle;
       document.querySelector("#flowLabel").textContent = labels[lang].flowLabel;
       document.querySelector("#nodeLabel").textContent = labels[lang].nodeLabel;
+      document.querySelector("#triggerSceneLabel").textContent = labels[lang].triggerSceneLabel;
       document.querySelector("#demoLabel").textContent = labels[lang].demoLabel;
       document.querySelector("#langLabel").textContent = labels[lang].langLabel;
       document.querySelector("#panelSummary").textContent = `${currentFlow().label[lang]} / ${names[state.node][lang]}`;
@@ -903,6 +1091,11 @@
       const nodeSelect = document.querySelector("#nodeSelect");
       nodeSelect.innerHTML = currentFlow().nodes
         .map((id) => `<option value="${id}" ${id === state.node ? "selected" : ""}>${names[id][lang]}</option>`)
+        .join("");
+
+      const triggerSceneSelect = document.querySelector("#triggerSceneSelect");
+      triggerSceneSelect.innerHTML = Object.entries(videoScenes)
+        .map(([id, scene]) => `<option value="${id}" ${id === state.triggerScene ? "selected" : ""}>${scene.label[lang]}</option>`)
         .join("");
 
       document.querySelectorAll("[data-demo]").forEach((button) => {
@@ -927,7 +1120,23 @@
     });
 
     document.querySelector("#nodeSelect").addEventListener("change", (event) => {
+      const previousNode = state.node;
       state.node = event.target.value;
+      const data = nodeData();
+      if (state.flowType === "video" && data.triggerScene) {
+        setVideoScene(data.triggerScene);
+      }
+      if (state.flowType === "video" && state.node === "video_help") {
+        state.returnNode = previousNode && previousNode !== "video_help" ? previousNode : "video_init";
+      }
+      render();
+    });
+
+    document.querySelector("#triggerSceneSelect").addEventListener("change", (event) => {
+      setVideoScene(event.target.value);
+      if (state.flowType === "video" && state.node.startsWith("video_completed")) {
+        state.node = "video_completed";
+      }
       render();
     });
 
@@ -948,7 +1157,23 @@
     document.querySelector("#nodeButtons").addEventListener("click", (event) => {
       const button = event.target.closest("[data-node]");
       if (!button) return;
+      const previousNode = state.node;
       state.node = button.dataset.node;
+      const data = nodeData();
+      if (state.flowType === "video" && data.triggerScene) {
+        setVideoScene(data.triggerScene);
+      }
+      if (state.flowType === "video" && state.node === "video_help") {
+        state.returnNode = previousNode && previousNode !== "video_help" ? previousNode : "video_init";
+      }
+      render();
+    });
+
+    document.querySelector("#tipsCard").addEventListener("click", (event) => {
+      if (!event.target.closest("[data-help-video]")) return;
+      state.flowType = "video";
+      state.returnNode = state.node;
+      state.node = "video_help";
       render();
     });
 
@@ -967,10 +1192,14 @@
         state.node = "account_interrupted";
       } else if (state.flowType === "video" && state.node.startsWith("video_failed")) {
         state.node = "video_reviewing";
-      } else if (state.flowType === "video" && state.node.endsWith("_required")) {
+      } else if (state.flowType === "video" && state.node === "video_help") {
+        state.node = "video_reviewing";
+      } else if (state.flowType === "video" && state.node === "video_init") {
+        state.node = "video_reviewing";
+      } else if (state.flowType === "video" && state.node === "video_required") {
         state.node = "video_reviewing";
       } else if (state.flowType === "video" && state.node === "video_reviewing") {
-        state.node = "video_completed_general";
+        state.node = "video_completed";
       }
       render();
     });
@@ -978,8 +1207,10 @@
     document.querySelector("#secondaryAction").addEventListener("click", () => {
       if (state.flowType === "account") {
         state.node = "account_init";
+      } else if (state.node === "video_help") {
+        state.node = currentFlow().nodes.includes(state.returnNode) ? state.returnNode : "video_init";
       } else {
-        state.node = "video_completed_general";
+        state.node = "video_init";
       }
       render();
     });
