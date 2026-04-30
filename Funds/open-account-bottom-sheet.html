@@ -7,21 +7,28 @@
   <style>
     :root {
       color-scheme: light;
-      --page: #f2f4f7;
-      --phone: #ffffff;
+      --page: oklch(96.5% 0.008 145);
+      --phone: oklch(98.5% 0.006 145);
       --mask: rgba(0, 0, 0, .5);
-      --sheet: #ffffff;
-      --ink: #333333;
-      --sub: #666a70;
-      --soft: #f4f5f6;
-      --line: #e5e7eb;
+      --sheet: oklch(99% 0.004 145);
+      --surface: oklch(99% 0.004 145);
+      --surface-raised: oklch(97.6% 0.006 145);
+      --ink: oklch(24% 0.012 145);
+      --sub: oklch(46% 0.012 145);
+      --muted: oklch(58% 0.012 145);
+      --soft: oklch(96% 0.007 145);
+      --line: oklch(89% 0.01 145);
       --line-strong: rgba(0, 0, 0, .2);
-      --black: #18181b;
-      --teal: #68d9ee;
-      --green: #0f9f6e;
-      --amber: #b7791f;
-      --red: #dc2626;
-      --blue: #276ef1;
+      --action: oklch(86% 0.19 132);
+      --action-ink: oklch(23% 0.08 135);
+      --accent: oklch(81% 0.11 195);
+      --success: oklch(47% 0.13 155);
+      --warning: oklch(58% 0.11 75);
+      --danger: oklch(54% 0.19 25);
+      --info: oklch(50% 0.16 255);
+      --info-bg: oklch(96.5% 0.018 255);
+      --warning-bg: oklch(96.5% 0.032 78);
+      --error-bg: oklch(96.5% 0.026 25);
       --radius-sheet: 24px;
       --radius-control: 10px;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
@@ -62,7 +69,7 @@
       min-height: 700px;
       overflow: hidden;
       border-radius: 30px;
-      background: #eef1f4;
+      background: var(--surface-raised);
       box-shadow: 0 22px 70px rgba(24, 31, 42, .22);
     }
 
@@ -156,12 +163,12 @@
     }
 
     .visual [data-accent] {
-      fill: var(--teal);
+      fill: var(--accent);
     }
 
     .visual [data-stroke] {
       fill: none;
-      stroke: #111820;
+      stroke: var(--ink);
       stroke-width: 2.6;
       stroke-linecap: round;
       stroke-linejoin: round;
@@ -196,12 +203,25 @@
       margin: 4px auto 0;
       padding: 10px 12px;
       border-radius: 12px;
-      background: #fff7f7;
-      color: #7f1d1d;
+      border: 1px solid var(--line);
+      background: var(--info-bg);
+      color: var(--info);
       font-size: 13px;
       line-height: 1.42;
       font-weight: 520;
       text-align: left;
+    }
+
+    .reason-note[data-level="warning"] {
+      border-color: color-mix(in oklch, var(--warning) 24%, var(--line));
+      background: var(--warning-bg);
+      color: var(--warning);
+    }
+
+    .reason-note[data-level="error"] {
+      border-color: color-mix(in oklch, var(--danger) 24%, var(--line));
+      background: var(--error-bg);
+      color: var(--danger);
     }
 
     .reason-note[hidden] {
@@ -214,7 +234,7 @@
       border: 1px solid var(--line);
       border-radius: 12px;
       padding: 12px;
-      background: #ffffff;
+      background: var(--surface);
       display: grid;
       gap: 9px;
       text-align: left;
@@ -249,8 +269,8 @@
       width: 7px;
       height: 7px;
       border-radius: 999px;
-      background: var(--teal);
-      box-shadow: 0 0 0 2px rgba(104, 217, 238, .22);
+      background: var(--accent);
+      box-shadow: 0 0 0 2px color-mix(in oklch, var(--accent) 22%, transparent);
     }
 
     .tips-card button {
@@ -258,7 +278,7 @@
       border: 0;
       padding: 0;
       background: transparent;
-      color: var(--blue);
+      color: var(--info);
       font-size: 13px;
       font-weight: 680;
       text-align: left;
@@ -280,7 +300,7 @@
       border: 1px solid var(--line);
       border-radius: 12px;
       padding: 10px 12px;
-      background: #ffffff;
+      background: var(--surface);
       display: grid;
       gap: 4px;
     }
@@ -320,7 +340,7 @@
       border: 1px solid var(--line);
       border-radius: 12px;
       padding: 12px;
-      background: #ffffff;
+      background: var(--surface);
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 8px 12px;
@@ -349,8 +369,8 @@
       align-self: start;
       border-radius: 999px;
       padding: 4px 8px;
-      background: #ecfdf5;
-      color: var(--green);
+      background: color-mix(in oklch, var(--success) 10%, var(--surface));
+      color: var(--success);
       font-size: 11px;
       line-height: 1;
       font-style: normal;
@@ -385,16 +405,35 @@
 
     .primary {
       border: 0;
-      background: var(--black);
-      color: #ffffff;
+      background: var(--action);
+      color: var(--action-ink);
       font-size: 18px;
+      transition: transform .18s cubic-bezier(.2, .8, .2, 1), background .18s cubic-bezier(.2, .8, .2, 1);
     }
 
     .secondary {
       border: 1px solid var(--line);
-      background: #ffffff;
+      background: var(--surface);
       color: var(--ink);
       font-size: 15px;
+    }
+
+    .primary:hover {
+      transform: scale(1.015);
+    }
+
+    .primary:active {
+      transform: scale(.985);
+    }
+
+    .primary:focus-visible,
+    .secondary:focus-visible,
+    .switch button:focus-visible,
+    .node-grid button:focus-visible,
+    .tips-card button:focus-visible,
+    .field select:focus-visible {
+      outline: 3px solid color-mix(in oklch, var(--action) 45%, transparent);
+      outline-offset: 2px;
     }
 
     .secondary[hidden] {
@@ -421,7 +460,7 @@
       width: 134px;
       height: 5px;
       border-radius: 100px;
-      background: #333333;
+      background: var(--ink);
     }
 
     .control-panel {
@@ -432,10 +471,10 @@
       width: min(348px, calc(100vw - 44px));
       max-height: calc(100vh - 44px);
       overflow: auto;
-      border: 1px solid rgba(222, 226, 232, .94);
+      border: 1px solid color-mix(in oklch, var(--line) 84%, transparent);
       border-radius: var(--radius-control);
       padding: 14px;
-      background: rgba(255, 255, 255, .96);
+      background: color-mix(in oklch, var(--surface) 96%, transparent);
       box-shadow: 0 18px 54px rgba(24, 31, 42, .18);
       backdrop-filter: blur(18px);
     }
@@ -459,10 +498,20 @@
       text-align: right;
     }
 
-    .field-grid {
+    .control-stack {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap: 12px;
+    }
+
+    .control-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, .9fr);
+      gap: 8px;
+    }
+
+    .control-section {
+      display: grid;
+      gap: 7px;
     }
 
     .field {
@@ -470,10 +519,12 @@
       gap: 6px;
     }
 
-    .field.wide {
-      grid-column: 1 / -1;
+    .field[hidden],
+    .control-section[hidden] {
+      display: none;
     }
 
+    .section-label,
     .field label {
       color: var(--sub);
       font-size: 11px;
@@ -486,24 +537,24 @@
       border: 1px solid var(--line);
       border-radius: 8px;
       padding: 0 9px;
-      background: #ffffff;
+      background: var(--surface);
       color: var(--ink);
       font-size: 12px;
       font-weight: 620;
     }
 
     .switch {
-      height: 38px;
       border: 1px solid var(--line);
       border-radius: 8px;
       padding: 3px;
-      background: #ffffff;
+      background: var(--surface);
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 3px;
     }
 
     .switch button {
+      min-height: 32px;
       border: 0;
       border-radius: 6px;
       background: transparent;
@@ -513,12 +564,11 @@
     }
 
     .switch button.active {
-      background: var(--black);
-      color: #ffffff;
+      background: var(--ink);
+      color: var(--surface);
     }
 
     .node-grid {
-      margin-top: 12px;
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 7px;
@@ -528,16 +578,16 @@
       min-height: 34px;
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: #ffffff;
+      background: var(--surface);
       color: var(--ink);
       font-size: 12px;
       font-weight: 700;
     }
 
     .node-grid button.active {
-      border-color: var(--black);
-      background: var(--black);
-      color: #ffffff;
+      border-color: var(--ink);
+      background: var(--ink);
+      color: var(--surface);
     }
 
     @media (max-width: 900px) {
@@ -586,7 +636,7 @@
         <span>5G 100%</span>
       </div>
       <div class="mask">
-        <section class="sheet" aria-label="Open account bottom sheet">
+        <section class="sheet" aria-label="Open account bottom sheet" aria-live="polite">
           <div class="sheet-top"><div class="handle"></div></div>
           <div class="sheet-content">
             <div class="visual" id="visual" aria-hidden="true"></div>
@@ -613,35 +663,36 @@
         <strong id="panelTitle"></strong>
         <span id="panelSummary"></span>
       </div>
-      <div class="field-grid">
-        <div class="field">
-          <label for="flowSelect" id="flowLabel"></label>
-          <select id="flowSelect"></select>
-        </div>
-        <div class="field">
-          <label id="langLabel"></label>
-          <div class="switch" id="langSwitch">
-            <button type="button" data-lang="zh">中文</button>
-            <button type="button" data-lang="en">EN</button>
+      <div class="control-stack">
+        <div class="control-row">
+          <div class="field">
+            <label id="flowLabel"></label>
+            <div class="switch" id="flowSwitch"></div>
+          </div>
+          <div class="field">
+            <label id="langLabel"></label>
+            <div class="switch" id="langSwitch">
+              <button type="button" data-lang="zh">中文</button>
+              <button type="button" data-lang="en">EN</button>
+            </div>
           </div>
         </div>
-        <div class="field wide">
-          <label for="nodeSelect" id="nodeLabel"></label>
-          <select id="nodeSelect"></select>
-        </div>
-        <div class="field wide">
-          <label for="triggerSceneSelect" id="triggerSceneLabel"></label>
-          <select id="triggerSceneSelect"></select>
-        </div>
-        <div class="field">
+        <div class="field" id="demoField">
           <label id="demoLabel"></label>
           <div class="switch" id="demoSwitch">
             <button type="button" data-demo="false"></button>
             <button type="button" data-demo="true"></button>
           </div>
         </div>
+        <div class="field" id="triggerSceneField">
+          <label for="triggerSceneSelect" id="triggerSceneLabel"></label>
+          <select id="triggerSceneSelect"></select>
+        </div>
+        <div class="control-section">
+          <div class="section-label" id="nodeLabel"></div>
+          <div class="node-grid" id="nodeButtons"></div>
+        </div>
       </div>
-      <div class="node-grid" id="nodeButtons"></div>
     </aside>
   </main>
 
@@ -738,6 +789,11 @@
       };
     }
 
+    const sceneAwareVideoNodes = new Set([
+      "video_required",
+      "video_reviewing"
+    ]);
+
     const videoScenes = {
       general: {
         label: text("通用操作", "General Action"),
@@ -748,39 +804,54 @@
           primary: text("开始视频认证", "Start Video Verification"),
           secondary: text("稍后处理", "Do It Later")
         },
+        reviewing: {
+          title: text("视频认证审核中", "Video Verification Under Review"),
+          desc: text("您的视频认证已提交。审核完成后，我们会通知您结果，您可以继续刚才的操作。", "Your video verification has been submitted. We’ll notify you once the review is complete, and you can continue your previous action."),
+          primary: text("查看认证状态", "View Verification Status")
+        },
         completed: {
           title: text("视频认证已通过", "Video Verification Completed"),
-          desc: text("您的视频认证已通过。现在可以继续完成刚才的操作。", "Your video verification has been approved. You can now continue your previous action."),
-          primary: text("继续操作", "Continue")
+          desc: text("您的视频认证已通过。现在可以继续开户或使用相关账户功能。如您此前有待处理的存款、取款或新增交易账号操作，请返回对应页面查看或继续处理。", "Your video verification has been approved. You can now continue your application or use related account features. If you had a pending deposit, withdrawal, or new trading account action, please return to the related page to view or continue it."),
+          primary: text("我知道了", "Got It")
         }
       },
       addAccount: {
-        label: text("添加交易账号", "Add Trading Account"),
+        label: text("创建第 2 个交易账号", "Create Second Trading Account"),
         required: {
           title: text("添加账户前需要认证", "Verification Required Before Adding Account"),
-          desc: text("请先完成视频认证，然后再添加新的交易账号。", "Please complete video verification before adding another trading account."),
-          error: text("视频认证通过前，暂时无法添加新的交易账号。", "You can’t add another trading account until video verification is approved."),
+          desc: text("创建第 2 个交易账号前，请先完成视频认证。认证通过后，您可以继续创建新的交易账号。", "Before creating a second trading account, please complete video verification. Once approved, you can continue creating the new trading account."),
+          error: text("视频认证通过前，暂时无法创建新的交易账号。", "You can’t create another trading account until video verification is approved."),
           primary: text("开始认证", "Start Verification"),
           secondary: text("稍后处理", "Do It Later")
         },
-        completed: {
-          title: text("认证已通过", "Verification Completed"),
-          desc: text("您的视频认证已通过。现在可以继续添加新的交易账号。", "Your video verification has been approved. You can now continue adding another trading account."),
-          primary: text("继续添加账户", "Continue Adding Account")
-        }
-      },
-      deposit: {
-        label: text("处理存款", "Process Deposit"),
-        required: {
-          title: text("需要完成视频认证", "Video Verification Required"),
-          desc: text("为继续处理本次存款，请完成视频认证。认证通过后，资金将继续处理。", "To continue processing this deposit, please complete video verification. Once approved, your deposit will continue to be processed."),
-          error: text("视频认证完成前，该笔存款可能暂时不会入账。", "This deposit may not be credited until video verification is completed."),
-          primary: text("开始视频认证", "Start Video Verification"),
-          secondary: text("查看存款记录", "View Deposit Record")
+        reviewing: {
+          title: text("视频认证审核中", "Video Verification Under Review"),
+          desc: text("您的视频认证已提交。认证通过后，您可以继续创建第 2 个交易账号。", "Your video verification has been submitted. Once approved, you can continue creating the second trading account."),
+          primary: text("查看认证状态", "View Verification Status")
         },
         completed: {
           title: text("认证已通过", "Verification Completed"),
-          desc: text("您的视频认证已通过。我们将继续处理您的存款。", "Your video verification has been approved. We’ll continue processing your deposit."),
+          desc: text("您的视频认证已通过。现在可以继续创建第 2 个交易账号。", "Your video verification has been approved. You can now continue creating the second trading account."),
+          primary: text("继续创建账号", "Continue Creating Account")
+        }
+      },
+      deposit: {
+        label: text("存款入账到交易账号", "Deposit to Trading Account"),
+        required: {
+          title: text("需要完成视频认证", "Video Verification Required"),
+          desc: text("您可以先提交本次存款。视频认证通过前，资金会保持待处理状态，暂不会进入交易账号。", "You can submit this deposit now. Until video verification is approved, the funds will remain pending and will not be credited to the trading account."),
+          error: text("认证通过后，系统会继续执行这笔存款，并将资金入账到您的交易账号。", "Once verification is approved, the system will continue this deposit and credit the funds to your trading account."),
+          primary: text("开始视频认证", "Start Video Verification"),
+          secondary: text("查看存款记录", "View Deposit Record")
+        },
+        reviewing: {
+          title: text("视频认证审核中", "Video Verification Under Review"),
+          desc: text("您的视频认证已提交。本次存款会保持待处理状态，认证通过后系统将继续入账到您的交易账号。", "Your video verification has been submitted. This deposit will remain pending, and once verification is approved, the system will continue crediting it to your trading account."),
+          primary: text("查看存款记录", "View Deposit Record")
+        },
+        completed: {
+          title: text("认证已通过", "Verification Completed"),
+          desc: text("您的视频认证已通过。系统将继续执行这笔存款，并把资金入账到您的交易账号。", "Your video verification has been approved. The system will continue this deposit and credit the funds to your trading account."),
           primary: text("查看存款记录", "View Deposit Record")
         }
       },
@@ -803,10 +874,15 @@
         label: text("提交取款", "Submit Withdrawal"),
         required: {
           title: text("取款前需要认证", "Verification Required Before Withdrawal"),
-          desc: text("为保障账户安全并满足账户要求，请先完成视频认证。", "To protect your account and meet account requirements, please complete video verification first."),
-          error: text("视频认证通过前，暂时无法提交取款申请。", "Withdrawals are temporarily unavailable until video verification is approved."),
+          desc: text("提交取款申请前，请先完成视频认证。认证通过后，您可以继续本次取款。", "Before submitting a withdrawal request, please complete video verification. Once approved, you can continue this withdrawal."),
+          error: text("视频认证通过前，暂时无法提交取款申请。", "Withdrawal requests are temporarily unavailable until video verification is approved."),
           primary: text("立即认证", "Verify Now"),
           secondary: text("返回", "Back")
+        },
+        reviewing: {
+          title: text("视频认证审核中", "Video Verification Under Review"),
+          desc: text("您的视频认证已提交。认证通过后，您可以继续提交本次取款申请。", "Your video verification has been submitted. Once approved, you can continue submitting this withdrawal request."),
+          primary: text("查看认证状态", "View Verification Status")
         },
         completed: {
           title: text("认证已通过", "Verification Completed"),
@@ -836,12 +912,24 @@
     }
 
     function videoCompletedData() {
-      const scene = videoScenes[state.triggerScene] || videoScenes.general;
+      const completed = videoScenes.general.completed;
       return {
         icon: "success",
-        title: scene.completed.title,
-        desc: scene.completed.desc,
-        primary: scene.completed.primary,
+        title: completed.title,
+        desc: completed.desc,
+        primary: completed.primary,
+        secondary: text("返回首页", "Back to Home")
+      };
+    }
+
+    function videoReviewingData() {
+      const scene = videoScenes[state.triggerScene] || videoScenes.general;
+      const reviewing = scene.reviewing || videoScenes.general.reviewing;
+      return {
+        icon: "review",
+        title: reviewing.title,
+        desc: reviewing.desc,
+        primary: reviewing.primary,
         secondary: text("返回首页", "Back to Home")
       };
     }
@@ -849,13 +937,21 @@
     function videoRequiredData() {
       const scene = videoScenes[state.triggerScene] || videoScenes.general;
       return {
-        icon: "demo",
+        icon: "video",
         title: scene.required.title,
         desc: scene.required.desc,
         error: scene.required.error,
+        noticeLevel: "warning",
         primary: scene.required.primary,
         secondary: scene.required.secondary
       };
+    }
+
+    function noticeLevelForNode(node, demoDone) {
+      if (node.endsWith("_failed")) return "error";
+      if (node === "account_approved" && !demoDone) return "warning";
+      if (node === "video_required") return "warning";
+      return "info";
     }
 
     function nodeData() {
@@ -916,10 +1012,11 @@
           secondary: text("联系客服", "Contact Support")
         },
         video_init: {
-          icon: "demo",
+          icon: "video",
           title: text("需要完成视频认证", "Video Verification Required"),
-          desc: text("根据印尼监管要求，请完成一段简短的视频认证，以确认账户由您本人申请和使用。认证通过后，您可以继续开户或使用相关账户功能。", "In accordance with Indonesian regulatory requirements, please complete a short video verification to confirm that the account is being opened and used by you. Once approved, you can continue your application or use the related account features."),
+          desc: text("请完成一段简短的视频认证，以确认账户由您本人申请和使用。通过后可继续开户或使用相关账户功能。", "Complete a short video verification to confirm the account is being opened and used by you. Once approved, you can continue your application or use related account features."),
           error: text("完成认证前，部分账户功能可能暂时不可用。", "Some account features may be temporarily unavailable until verification is completed."),
+          noticeLevel: "info",
           tips: [
             text("请确保本人单独入镜", "Make sure only you appear in the video"),
             text("请在光线充足的环境中录制", "Record in a well-lit environment"),
@@ -930,7 +1027,7 @@
           secondary: text("稍后完成", "Do It Later")
         },
         video_help: {
-          icon: "demo",
+          icon: "video",
           title: text("为什么需要视频认证？", "Why Is Video Verification Required?"),
           desc: text("视频认证用于满足印尼监管要求，并确认账户由您本人申请和使用。", "Video verification is used to meet Indonesian regulatory requirements and confirm that the account is being opened and used by you."),
           info: [
@@ -958,7 +1055,7 @@
             },
             {
               title: text("未完成认证会影响什么", "What Happens If Verification Is Not Completed"),
-              body: text("在视频认证完成前，部分账户功能可能暂时不可用，例如继续开户、添加新的交易账号、提交取款申请或处理部分存款。", "Until video verification is completed, some account features may be temporarily unavailable, such as continuing an application, adding a new trading account, submitting a withdrawal request, or processing certain deposits.")
+              body: text("在视频认证完成前，部分账户功能可能暂时不可用。例如，您可以先提交存款，但资金会保持待处理状态；创建新的交易账号、提交取款申请等操作需要认证通过后继续。", "Until video verification is completed, some account features may be temporarily unavailable. For example, you can submit a deposit first, but the funds will remain pending; creating a new trading account or submitting a withdrawal request can continue after verification is approved.")
             },
             {
               title: text("我们如何使用您的视频资料", "How We Use Your Video Information"),
@@ -969,13 +1066,7 @@
           secondary: text("返回", "Back")
         },
         video_required: videoRequiredData(),
-        video_reviewing: {
-          icon: "review",
-          title: text("视频认证审核中", "Video Verification Under Review"),
-          desc: text("您的视频认证已提交。审核完成后，我们会通知您结果。", "Your video verification has been submitted. We’ll notify you once the review is complete."),
-          primary: text("查看认证状态", "View Verification Status"),
-          secondary: text("返回首页", "Back to Home")
-        },
+        video_reviewing: videoReviewingData(),
         video_application_waiting: {
           icon: "review",
           title: text("开户流程等待认证结果", "Application Waiting for Verification"),
@@ -995,12 +1086,17 @@
         }
       };
 
-      return data[state.node];
+      const current = data[state.node];
+      return {
+        ...current,
+        noticeLevel: current.noticeLevel || noticeLevelForNode(state.node, demoDone)
+      };
     }
 
     function iconSvg(type) {
       const middle = {
         open: '<path data-accent d="M42 28c0-12 9.7-21.8 21.7-21.8s21.7 9.8 21.7 21.8v7.3l10.2 10.3H70.8c-2.3.8-4.7 1.2-7.1 1.2C51.7 46.8 42 40 42 28Z"/><circle data-stroke cx="64" cy="23" r="7.8"/><path data-stroke d="M50.5 43.5c1.8-8 6.4-12 13.3-12 4.9 0 8.6 1.8 11.1 5.3"/><path data-stroke d="M79.5 33.5v16M71.5 41.5h16"/>',
+        video: '<path data-accent d="M38 18h44a11 11 0 0 1 11 11v24a11 11 0 0 1-11 11H38a11 11 0 0 1-11-11V29a11 11 0 0 1 11-11Z"/><path data-stroke d="M38 18h44a11 11 0 0 1 11 11v24a11 11 0 0 1-11 11H38a11 11 0 0 1-11-11V29a11 11 0 0 1 11-11Z"/><path data-stroke d="M93 34l18-10v34L93 48"/><circle data-stroke cx="59" cy="34" r="7"/><path data-stroke d="M45 54c2.5-7.5 7.2-11.2 14-11.2s11.5 3.7 14 11.2"/>',
         demo: '<path data-accent d="M38 43.5c4.3-20.5 15.7-31 34.2-31 8.3 0 14.7 2 19.2 6v33h-53.4v-8Z"/><path data-stroke d="M46 45l12-13 9 8 17-20"/><path data-stroke d="M42 56.5h58"/><path data-stroke d="M42 24v32h58"/>',
         pause: '<path data-accent d="M42 18h46a10 10 0 0 1 10 10v20a10 10 0 0 1-10 10H42a10 10 0 0 1-10-10V28a10 10 0 0 1 10-10Z"/><path data-stroke d="M58 30v17M75 30v17"/><path data-stroke d="M35 62h60"/>',
         review: '<path data-accent d="M45 11h38l13 13v37H45z"/><path data-stroke d="M45 11h38l13 13v37H45z"/><path data-stroke d="M81 12v14h14"/><path data-stroke d="M55 35h30M55 46h22"/><circle data-stroke cx="88" cy="58" r="12"/><path data-stroke d="M97 67l8 8"/>',
@@ -1029,6 +1125,12 @@
       document.querySelector("#sheetDesc").textContent = data.desc[lang];
       const failureReason = document.querySelector("#failureReason");
       failureReason.textContent = data.error ? data.error[lang] : "";
+      failureReason.dataset.level = data.noticeLevel || "info";
+      if (data.error) {
+        failureReason.setAttribute("role", data.noticeLevel === "error" ? "alert" : "status");
+      } else {
+        failureReason.removeAttribute("role");
+      }
       failureReason.hidden = !data.error;
       const tipsCard = document.querySelector("#tipsCard");
       if (data.tips || data.help) {
@@ -1083,15 +1185,12 @@
       document.querySelector("#langLabel").textContent = labels[lang].langLabel;
       document.querySelector("#panelSummary").textContent = `${currentFlow().label[lang]} / ${names[state.node][lang]}`;
 
-      const flowSelect = document.querySelector("#flowSelect");
-      flowSelect.innerHTML = Object.entries(flows)
-        .map(([id, flow]) => `<option value="${id}" ${id === state.flowType ? "selected" : ""}>${flow.label[lang]}</option>`)
+      document.querySelector("#flowSwitch").innerHTML = Object.entries(flows)
+        .map(([id, flow]) => `<button type="button" data-flow="${id}" class="${id === state.flowType ? "active" : ""}">${flow.label[lang]}</button>`)
         .join("");
 
-      const nodeSelect = document.querySelector("#nodeSelect");
-      nodeSelect.innerHTML = currentFlow().nodes
-        .map((id) => `<option value="${id}" ${id === state.node ? "selected" : ""}>${names[id][lang]}</option>`)
-        .join("");
+      document.querySelector("#demoField").hidden = state.flowType !== "account";
+      document.querySelector("#triggerSceneField").hidden = !(state.flowType === "video" && sceneAwareVideoNodes.has(state.node));
 
       const triggerSceneSelect = document.querySelector("#triggerSceneSelect");
       triggerSceneSelect.innerHTML = Object.entries(videoScenes)
@@ -1113,22 +1212,11 @@
       `).join("");
     }
 
-    document.querySelector("#flowSelect").addEventListener("change", (event) => {
-      state.flowType = event.target.value;
+    document.querySelector("#flowSwitch").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-flow]");
+      if (!button) return;
+      state.flowType = button.dataset.flow;
       normalizeNode();
-      render();
-    });
-
-    document.querySelector("#nodeSelect").addEventListener("change", (event) => {
-      const previousNode = state.node;
-      state.node = event.target.value;
-      const data = nodeData();
-      if (state.flowType === "video" && data.triggerScene) {
-        setVideoScene(data.triggerScene);
-      }
-      if (state.flowType === "video" && state.node === "video_help") {
-        state.returnNode = previousNode && previousNode !== "video_help" ? previousNode : "video_init";
-      }
       render();
     });
 
