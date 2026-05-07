@@ -1,0 +1,2758 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Funds App</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f5f7f2;
+      --app: #f8faf5;
+      --surface: #ffffff;
+      --surface-2: #eef2ea;
+      --surface-3: #e8ebe6;
+      --glass: rgb(248 250 245 / .96);
+      --panel: rgb(255 255 255 / .98);
+      --body-bg: #f5f7f2;
+      --ink: #0e0f0c;
+      --muted: #454745;
+      --muted-2: #868685;
+      --line: rgb(14 15 12 / .12);
+      --soft-line: rgb(14 15 12 / .08);
+      --active-bg: #0e0f0c;
+      --active-border: #0e0f0c;
+      --on-active: #ffffff;
+      --brand: #9fe870;
+      --brand-hover: #cdffad;
+      --brand-dark: #163300;
+      --on-brand: #163300;
+      --mint: #e2f6d5;
+      --device-shell: #0e0f0c;
+      --blue: #2e6fd8;
+      --red: #d03238;
+      --amber: #b87500;
+      --green: #054d28;
+      --danger: var(--red);
+      --ring: rgb(14 15 12 / .12) 0 0 0 1px;
+      --shadow: var(--ring);
+      --shadow-soft: var(--ring);
+      --focus: 0 0 0 3px rgb(159 232 112 / .34), inset 0 0 0 1px #163300;
+      --radius: 16px;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      font-feature-settings: "calt" 1;
+    }
+
+    body[data-theme="dark"] {
+      color-scheme: dark;
+      --page: #090b08;
+      --app: #11140f;
+      --surface: #171b15;
+      --surface-2: #22281f;
+      --surface-3: #2b3327;
+      --glass: rgb(17 20 15 / .96);
+      --panel: rgb(23 27 21 / .98);
+      --body-bg: #090b08;
+      --ink: #f7faef;
+      --muted: #c5cabb;
+      --muted-2: #969d8d;
+      --line: rgb(226 246 213 / .16);
+      --soft-line: rgb(226 246 213 / .1);
+      --active-bg: #9fe870;
+      --active-border: #9fe870;
+      --on-active: #163300;
+      --brand: #9fe870;
+      --brand-hover: #cdffad;
+      --brand-dark: #cdffad;
+      --on-brand: #163300;
+      --mint: #25381d;
+      --device-shell: #0e0f0c;
+      --blue: #72a7ff;
+      --red: #ff777b;
+      --amber: #ffd11a;
+      --green: #9fe870;
+      --danger: var(--red);
+      --ring: rgb(226 246 213 / .16) 0 0 0 1px;
+      --shadow: var(--ring);
+      --shadow-soft: var(--ring);
+      --focus: 0 0 0 3px rgb(159 232 112 / .28), inset 0 0 0 1px #9fe870;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--body-bg);
+      color: var(--ink);
+      letter-spacing: 0;
+    }
+
+    button,
+    select,
+    input {
+      font: inherit;
+      font-feature-settings: "calt" 1;
+    }
+
+    button {
+      cursor: pointer;
+      transition: border-color .18s ease, background-color .18s ease, color .18s ease, box-shadow .18s ease, transform .18s ease;
+    }
+
+    button:hover:not(:disabled):not([aria-disabled="true"]) {
+      border-color: var(--brand);
+      transform: scale(1.02);
+    }
+
+    button:active:not(:disabled):not([aria-disabled="true"]) {
+      transform: scale(.97);
+    }
+
+    button:focus-visible,
+    select:focus-visible,
+    input:focus-visible {
+      outline: 0;
+      box-shadow: var(--focus);
+    }
+
+    .stage {
+      min-height: 100vh;
+      padding: 34px 24px 110px;
+      display: grid;
+      grid-template-columns: minmax(0, 430px) minmax(300px, 380px);
+      gap: 24px 32px;
+      justify-content: center;
+      justify-items: center;
+      align-items: start;
+    }
+
+    .device {
+      width: min(392px, calc(100vw - 34px));
+      border: 8px solid var(--device-shell);
+      border-radius: 34px;
+      background: var(--device-shell);
+      box-shadow: var(--ring);
+    }
+
+    .app {
+      position: relative;
+      height: min(812px, calc(100vh - 56px));
+      min-height: 650px;
+      overflow: hidden;
+      border-radius: 25px;
+      background: var(--app);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .status {
+      height: 30px;
+      padding: 8px 18px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--ink);
+      font-size: 11px;
+      font-weight: 780;
+      background: var(--glass);
+    }
+
+    .appbar {
+      padding: 12px 18px 14px;
+      display: grid;
+      grid-template-columns: 38px 1fr 38px;
+      gap: 10px;
+      align-items: center;
+      background: var(--glass);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .icon-btn {
+      width: 38px;
+      height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 9999px;
+      background: var(--surface);
+      color: var(--ink);
+      display: grid;
+      place-items: center;
+      font-size: 17px;
+      font-weight: 780;
+    }
+
+    .icon-btn:hover {
+      background: var(--mint);
+    }
+
+    .ph-icon {
+      width: 1em;
+      height: 1em;
+      display: block;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .icon-btn .ph-icon {
+      width: 19px;
+      height: 19px;
+    }
+
+    .title {
+      min-width: 0;
+      text-align: center;
+    }
+
+    .title strong {
+      display: block;
+      font-size: 19px;
+      line-height: 1.16;
+      font-weight: 900;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .title span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 22px;
+      margin-top: 5px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--brand);
+      color: var(--on-brand);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .content {
+      flex: 1;
+      padding: 14px 16px 22px;
+      overflow: auto;
+    }
+
+    .content:has(+ .flow-action.show) {
+      padding-bottom: 28px;
+    }
+
+    .hero-card {
+      position: relative;
+      min-height: 208px;
+      padding: 22px;
+      overflow: hidden;
+      border-radius: 30px;
+      color: var(--ink);
+      background: var(--mint);
+      box-shadow: var(--ring);
+      display: grid;
+      align-content: space-between;
+      border: 1px solid var(--line);
+    }
+
+    .hero-card.alt {
+      background: var(--surface);
+    }
+
+    .hero-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 84% 20%, var(--brand) 0 44px, transparent 45px),
+        linear-gradient(90deg, rgb(22 51 0 / .05) 0 1px, transparent 1px 100%);
+      background-size: auto, 30px 100%;
+      opacity: .72;
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      left: 22px;
+      right: 22px;
+      bottom: 78px;
+      height: 1px;
+      background: var(--line);
+      pointer-events: none;
+    }
+
+    .metric-label {
+      position: relative;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .metric-value {
+      position: relative;
+      margin-top: 14px;
+      font-size: 40px;
+      font-weight: 900;
+      line-height: .95;
+      letter-spacing: 0;
+    }
+
+    .metric-row {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-top: 24px;
+    }
+
+    .mini-metric {
+      min-height: 54px;
+      padding: 0;
+      border-radius: 0;
+      background: transparent;
+      border: 0;
+    }
+
+    .mini-metric span,
+    .mini-metric b {
+      display: block;
+    }
+
+    .mini-metric span {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .mini-metric b {
+      margin-top: 6px;
+      font-size: 14px;
+      color: var(--ink);
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 12px 0;
+    }
+
+    .quick-grid.two {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .quick-grid.one {
+      grid-template-columns: 1fr;
+    }
+
+    .quick-grid.four {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .quick {
+      min-height: 74px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: var(--surface);
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 7px;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 850;
+      box-shadow: var(--ring);
+    }
+
+    .quick span {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 9999px;
+      background: var(--brand);
+      color: var(--brand-dark);
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .quick span .ph-icon {
+      width: 17px;
+      height: 17px;
+      stroke-width: 2.3;
+    }
+
+    .quick:hover span {
+      background: var(--brand-hover);
+      color: var(--brand-dark);
+    }
+
+    .quick[aria-disabled="true"] {
+      cursor: not-allowed;
+      opacity: .48;
+      filter: saturate(.72);
+    }
+
+    .section-title {
+      margin: 20px 1px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+      font-weight: 860;
+    }
+
+    .section-title small {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 720;
+    }
+
+    .list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .item {
+      min-height: 62px;
+      padding: 13px 12px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: var(--ring);
+    }
+
+    .item:hover {
+      border-color: var(--brand);
+      background: var(--mint);
+    }
+
+    .item-main {
+      min-width: 0;
+    }
+
+    .item-main strong {
+      display: block;
+      font-size: 13px;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .item-main span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .amount {
+      flex: 0 0 auto;
+      text-align: right;
+      font-size: 13px;
+      font-weight: 860;
+    }
+
+    .amount small {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 720;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      min-height: 25px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .badge.green { background: var(--green); }
+    .badge.amber { background: var(--amber); color: var(--ink); }
+    .badge.red { background: var(--danger); }
+    .badge.blue { background: var(--blue); }
+    .badge.gray { background: var(--muted-2); }
+
+    .form {
+      display: grid;
+      gap: 12px;
+    }
+
+    .field {
+      min-height: 68px;
+      padding: 13px 12px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--surface);
+    }
+
+    .field label {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 760;
+    }
+
+    .field-value {
+      margin-top: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 820;
+    }
+
+    .field-value strong {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: inherit;
+      font-weight: inherit;
+    }
+
+    .field-value span {
+      min-width: 0;
+      max-width: 56%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .select-field {
+      width: 100%;
+      min-height: 68px;
+      padding: 13px 12px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--surface);
+      color: var(--ink);
+      text-align: left;
+      box-shadow: var(--ring);
+    }
+
+    .select-field:hover:not([aria-disabled="true"]) {
+      background: var(--mint);
+    }
+
+    .select-field label {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 760;
+      pointer-events: none;
+    }
+
+    .select-field .field-value {
+      pointer-events: none;
+    }
+
+    .select-field[data-open-drawer]:not([aria-disabled="true"]) .field-value::after {
+      content: "›";
+      width: 22px;
+      height: 22px;
+      flex: 0 0 22px;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: var(--brand-dark);
+      font-size: 18px;
+      font-weight: 780;
+      line-height: 1;
+      background: var(--brand);
+    }
+
+    .select-field[aria-disabled="true"] {
+      cursor: default;
+    }
+
+    .account-options,
+    .channel-grid {
+      display: grid;
+      gap: 9px;
+    }
+
+    .account-option,
+    .channel-card {
+      width: 100%;
+      min-height: 66px;
+      padding: 13px 12px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: var(--surface);
+      color: var(--ink);
+      text-align: left;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .account-option.active,
+    .channel-card.active {
+      border-color: var(--active-border);
+      background: var(--active-bg);
+      color: var(--on-active);
+    }
+
+    .account-option.active span,
+    .channel-card.active span,
+    .account-option.active small,
+    .channel-card.active small {
+      color: rgb(255 255 255 / .78);
+    }
+
+    .account-option strong,
+    .channel-card strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .account-option span,
+    .channel-card span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 720;
+    }
+
+    .channel-card.disabled {
+      cursor: not-allowed;
+      opacity: .46;
+      filter: saturate(.6);
+    }
+
+    .keypad {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: var(--surface);
+    }
+
+    .amount-stage {
+      min-height: 184px;
+      padding: 20px;
+      border-radius: 30px;
+      color: var(--ink);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      box-shadow: var(--ring);
+    }
+
+    .amount-stage label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 760;
+    }
+
+    .amount-display {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .amount-display span {
+      color: var(--muted);
+      font-size: 20px;
+      font-weight: 820;
+    }
+
+    .amount-display strong {
+      font-size: 46px;
+      line-height: 1;
+      font-weight: 900;
+    }
+
+    .amount-stage .chips {
+      margin-top: 24px;
+    }
+
+    .amount-stage .chip {
+      border-color: var(--line);
+      background: var(--surface);
+      color: var(--ink);
+      box-shadow: none;
+    }
+
+    .amount-stage .chip.active {
+      border-color: var(--active-border);
+      background: var(--brand);
+      color: var(--on-brand);
+    }
+
+    body[data-theme="dark"] .amount-stage {
+      color: var(--ink);
+      background: linear-gradient(180deg, var(--surface), var(--surface-2));
+      border-color: var(--line);
+      box-shadow: none;
+    }
+
+    .money-input {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 0 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .money-input span {
+      color: var(--muted);
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .money-input strong {
+      font-size: 38px;
+      line-height: 1;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 12px;
+    }
+
+    .chip {
+      min-height: 30px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .chip.active {
+      border-color: var(--active-border);
+      background: var(--brand);
+      color: var(--on-brand);
+    }
+
+    .primary {
+      width: 100%;
+      min-height: 48px;
+      margin-top: 12px;
+      border: 0;
+      border-radius: 9999px;
+      background: var(--brand);
+      color: var(--on-brand);
+      font-size: 15px;
+      font-weight: 860;
+      box-shadow: none;
+    }
+
+    .primary:hover:not(:disabled) {
+      background: var(--brand-hover);
+      transform: translateY(-1px);
+    }
+
+    .primary:disabled {
+      cursor: not-allowed;
+      opacity: .48;
+      box-shadow: none;
+    }
+
+    .flow-action {
+      display: none;
+      padding: 12px 16px;
+      border-top: 1px solid var(--line);
+      background: var(--glass);
+      backdrop-filter: blur(16px);
+    }
+
+    .flow-action.show {
+      display: block;
+    }
+
+    .flow-action .primary {
+      margin-top: 0;
+    }
+
+    .upload-card {
+      width: 100%;
+      min-height: 150px;
+      padding: 18px;
+      border: 1px dashed var(--line);
+      border-radius: 30px;
+      background: var(--surface);
+      color: var(--ink);
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 10px;
+      text-align: center;
+    }
+
+    .upload-card b {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 9999px;
+      background: var(--surface-2);
+      color: var(--brand-dark);
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .upload-card strong {
+      display: block;
+      font-size: 14px;
+      font-weight: 860;
+    }
+
+    .upload-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 760;
+    }
+
+    .upload-card.active {
+      border-style: solid;
+      border-color: var(--active-border);
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 104px;
+      z-index: 90;
+      min-width: 220px;
+      max-width: min(340px, calc(100vw - 44px));
+      padding: 12px 14px;
+      border-radius: 9999px;
+      background: var(--active-bg);
+      color: var(--on-active);
+      box-shadow: var(--shadow);
+      font-size: 13px;
+      font-weight: 820;
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 12px);
+      transition: opacity .18s ease, transform .18s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    .secondary {
+      width: 100%;
+      min-height: 46px;
+      border: 1px solid var(--line);
+      border-radius: 9999px;
+      background: var(--surface);
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      margin-bottom: 12px;
+    }
+
+    .toolbar .chip {
+      flex: 0 0 auto;
+    }
+
+    .client-card {
+      min-height: 92px;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: var(--surface);
+      box-shadow: var(--ring);
+    }
+
+    .client-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .avatar-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--brand-dark);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .progress {
+      height: 7px;
+      margin-top: 13px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      overflow: hidden;
+    }
+
+    .progress b {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--brand);
+    }
+
+    .review-panel {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: var(--surface);
+      box-shadow: var(--ring);
+    }
+
+    .review-panel .row {
+      min-height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--soft-line);
+      font-size: 13px;
+      font-weight: 760;
+    }
+
+    .review-panel .row:last-child {
+      border-bottom: 0;
+    }
+
+    .review-panel .row span {
+      color: var(--muted);
+      font-weight: 720;
+    }
+
+    .risk-score {
+      min-height: 164px;
+      padding: 18px;
+      border-radius: 30px;
+      background: var(--ink);
+      color: var(--surface);
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      text-align: center;
+      border: 1px solid var(--line);
+    }
+
+    .risk-score strong {
+      display: block;
+      font-size: 58px;
+      line-height: 1;
+    }
+
+    .risk-score span {
+      margin-top: 8px;
+      color: rgb(255 255 255 / .72);
+      font-size: 12px;
+      font-weight: 740;
+    }
+
+    .tabbar {
+      height: 66px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid var(--line);
+      background: var(--panel);
+    }
+
+    .tab {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 3px;
+      font-size: 10px;
+      font-weight: 780;
+    }
+
+    .tab b {
+      width: 22px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      font-size: 15px;
+      line-height: 1;
+      border-radius: 999px;
+    }
+
+    .tab b .ph-icon {
+      width: 16px;
+      height: 16px;
+      stroke-width: 2.3;
+    }
+
+    .tab.active {
+      color: var(--brand-dark);
+    }
+
+    .tab.active b {
+      background: var(--mint);
+    }
+
+    .control-panel {
+      position: sticky;
+      top: 34px;
+      z-index: 40;
+      width: min(380px, 100%);
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .control-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .control-head strong {
+      font-size: 14px;
+    }
+
+    .control-head span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 760;
+    }
+
+    .control-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .control-field label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 780;
+    }
+
+    .control-field select {
+      width: 100%;
+      height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--ink);
+      padding: 0 10px;
+      font-size: 13px;
+      font-weight: 760;
+    }
+
+    .control-field select:hover {
+      border-color: var(--brand);
+    }
+
+    .control-actions {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 7px;
+      margin-top: 12px;
+    }
+
+    .control-actions button {
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 9999px;
+      background: var(--surface);
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 780;
+    }
+
+    .control-actions button.active {
+      border-color: var(--active-border);
+      background: var(--brand);
+      color: var(--on-brand);
+    }
+
+    .drawer-backdrop {
+      position: absolute;
+      inset: 0;
+      z-index: 70;
+      background: rgb(14 15 12 / .42);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
+    }
+
+    .drawer-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .drawer {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 80;
+      width: 100%;
+      max-height: min(76%, 620px);
+      padding: 10px 14px 18px;
+      border-radius: 30px 30px 0 0;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--ring);
+      transform: translateY(105%);
+      transition: transform .24s ease;
+      backdrop-filter: blur(18px);
+    }
+
+    .drawer.open {
+      transform: translateY(0);
+    }
+
+    .drawer-handle {
+      width: 42px;
+      height: 5px;
+      margin: 0 auto 13px;
+      border-radius: 99px;
+      background: var(--line);
+    }
+
+    .drawer-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .drawer-head strong {
+      font-size: 17px;
+    }
+
+    .drawer-close {
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 9999px;
+      background: var(--surface);
+      color: var(--ink);
+      font-weight: 820;
+    }
+
+    .drawer-list {
+      display: grid;
+      gap: 9px;
+      overflow: auto;
+      max-height: calc(min(76vh, 620px) - 84px);
+      padding-bottom: 4px;
+    }
+
+    @media (max-width: 980px) {
+      .stage {
+        grid-template-columns: 1fr;
+        padding-bottom: 34px;
+      }
+
+      .control-panel {
+        position: static;
+        width: min(430px, calc(100vw - 34px));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .stage {
+        padding: 12px 10px;
+        align-items: start;
+        gap: 12px;
+      }
+
+      .device {
+        border-width: 0;
+        border-radius: 0;
+        width: 100%;
+        max-width: 430px;
+        box-shadow: none;
+        background: transparent;
+      }
+
+      .app {
+        height: calc(100vh - 24px);
+        min-height: 620px;
+        border-radius: 0 0 18px 18px;
+      }
+
+      .control-panel {
+        position: static;
+        width: min(430px, 100%);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="stage">
+    <section class="device" aria-label="Funds app prototype">
+      <div class="app">
+        <div class="status">
+          <span>9:41</span>
+          <span>5G 100%</span>
+        </div>
+        <header class="appbar">
+          <button class="icon-btn" id="backButton" type="button" aria-label="返回">‹</button>
+          <div class="title">
+            <strong id="screenTitle">资金总览</strong>
+            <span id="roleChip">Trader</span>
+          </div>
+          <button class="icon-btn" id="messageButton" type="button" aria-label="消息">•</button>
+        </header>
+        <div class="content" id="screen"></div>
+        <div class="flow-action" id="flowAction"></div>
+        <nav class="tabbar" id="tabbar" aria-label="底部导航"></nav>
+        <div class="drawer-backdrop" id="drawerBackdrop"></div>
+        <section class="drawer" id="bottomDrawer" aria-modal="true" aria-label="底部选择器">
+          <div class="drawer-handle"></div>
+          <div class="drawer-head">
+            <strong id="drawerTitle">选择</strong>
+            <button class="drawer-close" type="button" data-close-drawer>×</button>
+          </div>
+          <div class="drawer-list" id="drawerList"></div>
+        </section>
+      </div>
+    </section>
+
+    <aside class="control-panel" id="controlPanel" aria-label="控制面板">
+      <div class="control-head">
+        <strong id="controlTitle">控制面板</strong>
+        <span id="panelState">Trader / 总览</span>
+      </div>
+      <div class="control-grid">
+        <div class="control-field">
+          <label for="regulatoryModeSelect" id="regulatoryModeLabel">监管层</label>
+          <select id="regulatoryModeSelect">
+            <option value="unregulated">非监管地区</option>
+            <option value="regulated">监管地区</option>
+          </select>
+        </div>
+        <div class="control-field">
+          <label for="roleSelect" id="roleLabel">角色</label>
+          <select id="roleSelect"></select>
+        </div>
+        <div class="control-field">
+          <label for="sceneSelect" id="sceneLabel">场景</label>
+          <select id="sceneSelect"></select>
+        </div>
+        <div class="control-field">
+          <label for="languageSelect" id="languageLabel">语言</label>
+          <select id="languageSelect">
+            <option value="zh">中文</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+        <div class="control-field">
+          <label for="themeSelect" id="themeLabel">主题</label>
+          <select id="themeSelect">
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </div>
+        <div class="control-field">
+          <label for="accountModeSelect" id="accountModeLabel">账号情况</label>
+          <select id="accountModeSelect">
+            <option value="multiple">多个交易账号</option>
+            <option value="single">单个交易账号</option>
+          </select>
+        </div>
+      </div>
+      <div class="control-actions" id="roleButtons"></div>
+    </aside>
+    <div class="toast" id="toast"></div>
+  </main>
+
+  <script>
+    const appState = {
+      role: "client",
+      scene: "overview",
+      lang: "zh",
+      theme: "light",
+      depositEntry: "home",
+      depositAccount: null,
+      depositAmount: 5000,
+      depositChannel: null,
+      depositStep: 1,
+      depositProof: false,
+      withdrawEntry: "home",
+      withdrawAccount: null,
+      withdrawAmount: 12000,
+      withdrawMethod: null,
+      transferType: "trading",
+      transferEntry: "wallet",
+      transferFrom: null,
+      transferAmount: 8000,
+      transferTo: null,
+      accountMode: "multiple",
+      regulatoryMode: "unregulated",
+      activeDrawer: null,
+      toast: ""
+    };
+
+    const roles = {
+      client: {
+        name: "Trader",
+        enName: "Trader",
+        chip: "Trader",
+        tabs: [
+          ["overview", "house", "首页", "Home"],
+          ["tradeAccount", "chart", "交易账号", "Trading"],
+          ["wallet", "wallet", "Wallet", "Wallet"],
+          ["records", "receipt", "流水", "Records"]
+        ],
+        scenes: [
+          ["overview", "总览", "Overview"],
+          ["tradeAccount", "交易账号", "Trading Account"],
+          ["wallet", "Wallet", "Wallet"],
+          ["deposit", "存款", "Deposit"],
+          ["transfer", "转账", "Transfer"],
+          ["withdraw", "取款", "Withdraw"],
+          ["records", "流水", "Records"]
+        ]
+      },
+      ib: {
+        name: "Partner",
+        enName: "Partner",
+        chip: "Partner",
+        tabs: [
+          ["overview", "house", "首页", "Home"],
+          ["tradeAccount", "chart", "交易账号", "Trading"],
+          ["wallet", "wallet", "Wallet", "Wallet"],
+          ["clients", "users", "Trader", "Traders"]
+        ],
+        scenes: [
+          ["overview", "总览", "Overview"],
+          ["tradeAccount", "交易账号", "Trading Account"],
+          ["wallet", "Wallet", "Wallet"],
+          ["deposit", "存款", "Deposit"],
+          ["transfer", "转账", "Transfer"],
+          ["withdraw", "取款", "Withdraw"],
+          ["clients", "Trader", "Traders"],
+          ["alerts", "跟进", "Follow-up"],
+          ["records", "流水", "Records"]
+        ]
+      },
+      finance: {
+        name: "财务",
+        enName: "Finance",
+        chip: "Finance",
+        tabs: [
+          ["queue", "tray", "待办", "Queue"],
+          ["depositReview", "plus", "入金", "Deposit"],
+          ["payout", "minus", "出金", "Payout"],
+          ["reconcile", "receipt", "对账", "Reconcile"]
+        ],
+        scenes: [
+          ["queue", "待办", "Queue"],
+          ["depositReview", "入金审核", "Deposit Review"],
+          ["payout", "出金处理", "Payout"],
+          ["reconcile", "对账", "Reconcile"]
+        ]
+      },
+      risk: {
+        name: "风控",
+        enName: "Risk",
+        chip: "Risk",
+        tabs: [
+          ["alerts", "warning", "预警", "Alerts"],
+          ["review", "shield", "复核", "Review"],
+          ["rules", "list-checks", "规则", "Rules"],
+          ["profile", "user", "我的", "Me"]
+        ],
+        scenes: [
+          ["alerts", "预警", "Alerts"],
+          ["review", "人工复核", "Manual Review"],
+          ["rules", "规则", "Rules"],
+          ["records", "审计", "Audit"]
+        ]
+      }
+    };
+
+    const screen = document.querySelector("#screen");
+    const title = document.querySelector("#screenTitle");
+    const roleChip = document.querySelector("#roleChip");
+    const tabbar = document.querySelector("#tabbar");
+    const flowAction = document.querySelector("#flowAction");
+    const regulatoryModeSelect = document.querySelector("#regulatoryModeSelect");
+    const roleSelect = document.querySelector("#roleSelect");
+    const sceneSelect = document.querySelector("#sceneSelect");
+    const languageSelect = document.querySelector("#languageSelect");
+    const themeSelect = document.querySelector("#themeSelect");
+    const accountModeSelect = document.querySelector("#accountModeSelect");
+    const roleButtons = document.querySelector("#roleButtons");
+    const panelState = document.querySelector("#panelState");
+    const controlTitle = document.querySelector("#controlTitle");
+    const regulatoryModeLabel = document.querySelector("#regulatoryModeLabel");
+    const roleLabel = document.querySelector("#roleLabel");
+    const sceneLabel = document.querySelector("#sceneLabel");
+    const languageLabel = document.querySelector("#languageLabel");
+    const themeLabel = document.querySelector("#themeLabel");
+    const accountModeLabel = document.querySelector("#accountModeLabel");
+    const drawerBackdrop = document.querySelector("#drawerBackdrop");
+    const bottomDrawer = document.querySelector("#bottomDrawer");
+    const drawerTitle = document.querySelector("#drawerTitle");
+    const drawerList = document.querySelector("#drawerList");
+    const toast = document.querySelector("#toast");
+    const backButton = document.querySelector("#backButton");
+    const messageButton = document.querySelector("#messageButton");
+    let toastTimer = null;
+
+    function t(zh, en) {
+      return appState.lang === "zh" ? zh : en;
+    }
+
+    function roleName(role) {
+      return appState.lang === "zh" ? role.name : role.enName;
+    }
+
+    function isRegulatedTrader() {
+      return appState.regulatoryMode === "regulated" && appState.role === "client";
+    }
+
+    function isRegulatedPartner() {
+      return appState.regulatoryMode === "regulated" && appState.role === "ib";
+    }
+
+    function resetTransfer(type = "trading", entry = "wallet") {
+      appState.transferType = type;
+      appState.transferEntry = entry;
+      appState.transferFrom = null;
+      appState.transferTo = null;
+    }
+
+    function accountTransferSourceId() {
+      return "MT5-204882";
+    }
+
+    function isPublicRegulatedTransfer(role) {
+      return isRegulatedTrader() && role === "trader" && appState.transferType === "accountToAccount" && appState.transferEntry === "home";
+    }
+
+    function isPublicTraderTransfer(role) {
+      return role === "trader" && appState.role === "client" && appState.transferEntry === "home";
+    }
+
+    function isRegulatedPartnerWalletTransfer(role) {
+      return role === "partner" && isRegulatedPartner() && appState.transferEntry === "partnerWallet";
+    }
+
+    function money(value, note) {
+      return `<div class="amount">${value}${note ? `<small>${note}</small>` : ""}</div>`;
+    }
+
+    function badge(text, tone) {
+      return `<span class="badge ${tone}">${text}</span>`;
+    }
+
+    function stickySubmit(label) {
+      return "";
+    }
+
+    const iconPaths = {
+      "arrow-left": `<path d="M15 18l-6-6 6-6"/><path d="M9 12h11"/>`,
+      "bell": `<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/>`,
+      "house": `<path d="M3 11.5 12 4l9 7.5"/><path d="M5 10.5V20h14v-9.5"/><path d="M9.5 20v-6h5v6"/>`,
+      "chart": `<path d="M4 19h16"/><path d="M7 16V9"/><path d="M12 16V5"/><path d="M17 16v-4"/>`,
+      "wallet": `<path d="M4 7h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12"/><path d="M16 13h4"/><path d="M16 13.01v-.01"/>`,
+      "receipt": `<path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z"/><path d="M9 8h6"/><path d="M9 12h6"/><path d="M9 16h4"/>`,
+      "users": `<path d="M16 11a4 4 0 1 0-8 0"/><path d="M4 20a8 8 0 0 1 16 0"/><path d="M18 9a3 3 0 0 1 3 3"/><path d="M3 12a3 3 0 0 1 3-3"/>`,
+      "tray": `<path d="M4 4h16v10l-3 6H7l-3-6V4z"/><path d="M4 14h5l2 3h2l2-3h5"/>`,
+      "plus": `<path d="M12 5v14"/><path d="M5 12h14"/>`,
+      "minus": `<path d="M5 12h14"/>`,
+      "transfer": `<path d="M7 7h12l-3-3"/><path d="M19 7l-3 3"/><path d="M17 17H5l3 3"/><path d="M5 17l3-3"/>`,
+      "stack": `<path d="M12 3 3 8l9 5 9-5-9-5z"/><path d="m3 12 9 5 9-5"/><path d="m3 16 9 5 9-5"/>`,
+      "warning": `<path d="M12 4 3 20h18L12 4z"/><path d="M12 9v5"/><path d="M12 17h.01"/>`,
+      "shield": `<path d="M12 3 20 6v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="m8.5 12 2.3 2.3 4.7-5"/>`,
+      "list-checks": `<path d="m4 7 1.5 1.5L8.5 5"/><path d="M11 7h9"/><path d="m4 13 1.5 1.5 3-3.5"/><path d="M11 13h9"/><path d="M4 19h4"/><path d="M11 19h9"/>`,
+      "user": `<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/><path d="M4 21a8 8 0 0 1 16 0"/>`
+    };
+
+    function icon(name) {
+      const path = iconPaths[name] || iconPaths.house;
+      return `<svg class="ph-icon" viewBox="0 0 24 24" aria-hidden="true">${path}</svg>`;
+    }
+
+    backButton.innerHTML = icon("arrow-left");
+    messageButton.innerHTML = icon("bell");
+
+    function item(titleText, meta, right) {
+      return `
+        <div class="item">
+          <div class="item-main">
+            <strong>${titleText}</strong>
+            <span>${meta}</span>
+          </div>
+          ${right}
+        </div>
+      `;
+    }
+
+    function hero(label, value, a, b, alt = false) {
+      return `
+        <div class="hero-card ${alt ? "alt" : ""}">
+          <div class="metric-label">${label}</div>
+          <div class="metric-value">${value}</div>
+          <div class="metric-row">
+            <div class="mini-metric"><span>${a[0]}</span><b>${a[1]}</b></div>
+            <div class="mini-metric"><span>${b[0]}</span><b>${b[1]}</b></div>
+          </div>
+        </div>
+      `;
+    }
+
+    function publicFundActions(entry = "home", accountId = "") {
+      const transferType = entry === "tradeAccount" || isRegulatedTrader() ? "accountToAccount" : "trading";
+      const transferEntry = entry === "home" ? "home" : (transferType === "accountToAccount" ? entry : "wallet");
+      const transferDisabled = transferType === "accountToAccount" && !canAccountToAccount(roleKind());
+      return `
+        <div class="quick-grid">
+          <button class="quick" data-jump="deposit" data-entry="${entry}" data-account-id="${accountId}"><span>${icon("plus")}</span>${t("存款", "Deposit")}</button>
+          <button class="quick" data-jump="transfer" data-transfer-type="${transferType}" data-transfer-entry="${transferEntry}" data-account-id="${accountId}" ${transferDisabled ? "aria-disabled=\"true\"" : ""}><span>${icon("transfer")}</span>${t("转账", "Transfer")}</button>
+          <button class="quick" data-jump="withdraw" data-entry="${entry}" data-account-id="${accountId}"><span>${icon("minus")}</span>${t("取款", "Withdraw")}</button>
+        </div>
+      `;
+    }
+
+    function tradingAccountScreen(role) {
+      const detailAccount = "MT5-204882";
+      return `
+        ${hero(t("交易账号详情", "Trading Account Detail"), "$31,860.42", [detailAccount, "Standard"], [t("可用保证金", "Free Margin"), "$18,420.10"], true)}
+        ${publicFundActions("tradeAccount", detailAccount)}
+        <div class="section-title">${t("账号列表", "Accounts")}</div>
+        <div class="list">
+          ${item("MT5-204882", t("Wallet 可转入 $96,250.40", "Wallet available $96,250.40"), money("$22,180.42", t("净值", "Equity")))}
+          ${item("MT5-309117", role === "partner" ? t("下级交易账号", "Subordinate trading account") : t("模拟策略账号", "Strategy account"), money("$9,680.00", t("净值", "Equity")))}
+        </div>
+      `;
+    }
+
+    function depositAccounts(role) {
+      const accounts = role === "partner"
+        ? [
+          ["MT5-204882", "Partner Standard", "$22,180.42"],
+          ["MT5-309117", t("下级交易账号", "Sub Trading"), "$9,680.00"],
+          ["MT5-572001", t("下级交易账号", "Sub Trading"), "$18,240.00"]
+        ]
+        : [
+          ["MT5-204882", "Standard", "$22,180.42"],
+          ["MT5-309117", "Pro", "$9,680.00"]
+        ];
+      return appState.accountMode === "single" ? accounts.slice(0, 1) : accounts;
+    }
+
+    function canAccountToAccount(role) {
+      return depositAccounts(role).length > 1;
+    }
+
+    function transferSources(role) {
+      if (role !== "trader" || appState.transferEntry !== "home") return [];
+      const accounts = depositAccounts(role);
+      if (isRegulatedTrader()) return accounts;
+      return [["Wallet USD", "Wallet", "$96,250.40"], ...accounts];
+    }
+
+    function resolveDepositAccount(role) {
+      const accounts = depositAccounts(role);
+      if (appState.depositEntry === "tradeAccount") return appState.depositAccount || "MT5-204882";
+      if (accounts.length === 1) return accounts[0][0];
+      return appState.depositAccount;
+    }
+
+    function depositChannels(amount) {
+      return [
+        ["bankCard", t("银行卡", "Bank Card"), "USD", 100, 50000, true],
+        ["ewallet", t("电子钱包", "E-wallet"), "USD", 20, 30000, false],
+        ["crypto", t("数字货币", "Crypto"), "USDT", 20, 30000, false],
+        ["wire", t("电汇", "Wire Transfer"), "USD", 10000, 100000, true]
+      ].map(([id, name, currency, min, max, requiresProof]) => ({
+        id,
+        name,
+        currency,
+        min,
+        max,
+        requiresProof,
+        enabled: amount >= min && amount <= max
+      }));
+    }
+
+    function selectedDepositChannel(amount) {
+      const channels = depositChannels(amount);
+      return channels.find(channel => channel.id === appState.depositChannel && channel.enabled) || channels.find(channel => channel.enabled) || null;
+    }
+
+    function selectedPayoutMethod(role) {
+      const methods = payoutMethods(role);
+      return methods.find(method => method[0] === appState.withdrawMethod) || methods[0];
+    }
+
+    function depositScreen(role) {
+      const accounts = depositAccounts(role);
+      const selectedAccount = resolveDepositAccount(role);
+      const selectedAccountInfo = accounts.find(([id]) => id === selectedAccount);
+      const canChangeAccount = accounts.length > 1 && appState.depositEntry !== "tradeAccount";
+      const amount = appState.depositAmount;
+      const selectedChannel = selectedDepositChannel(amount);
+
+      if (appState.depositStep === 2 && selectedChannel) {
+        return `
+          <div class="form">
+            <button class="select-field" type="button" aria-disabled="true">
+              <label>${t("交易账号", "Trading Account")}</label>
+              <div class="field-value">
+                <strong>${selectedAccountInfo ? `${selectedAccountInfo[0]} · ${selectedAccountInfo[1]}` : t("未选择", "Not selected")}</strong>
+                <span>${selectedAccountInfo ? selectedAccountInfo[2] : "—"}</span>
+              </div>
+            </button>
+
+            <div class="amount-stage">
+              <label>${t("存款金额", "Deposit Amount")}</label>
+              <div class="amount-display"><span>$</span><strong>${amount.toLocaleString("en-US")}</strong></div>
+              <div class="chips">
+                <button class="chip active" type="button">${selectedChannel.name}</button>
+                <button class="chip active" type="button">${t("转账凭证", "Transfer Proof")}</button>
+              </div>
+            </div>
+
+            <button class="upload-card ${appState.depositProof ? "active" : ""}" type="button" data-upload-proof>
+              <b>${appState.depositProof ? "✓" : "+"}</b>
+              <strong>${appState.depositProof ? "receipt_0429.png" : t("上传转账凭证", "Upload Transfer Proof")}</strong>
+              <span>${appState.depositProof ? t("已选择", "Selected") : selectedChannel.name}</span>
+            </button>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="form">
+          <button class="select-field" type="button" data-open-drawer="depositAccount" ${canChangeAccount ? "" : "aria-disabled=\"true\""}>
+            <label>${t("交易账号", "Trading Account")}</label>
+            <div class="field-value">
+              <strong>${selectedAccountInfo ? `${selectedAccountInfo[0]} · ${selectedAccountInfo[1]}` : t("未选择", "Not selected")}</strong>
+              <span>${selectedAccountInfo ? selectedAccountInfo[2] : "—"}</span>
+            </div>
+          </button>
+
+          <div class="amount-stage">
+            <label>${t("存款金额", "Deposit Amount")}</label>
+            <div class="amount-display"><span>$</span><strong>${amount.toLocaleString("en-US")}</strong></div>
+            <div class="chips">
+              ${[500, 5000, 20000, 80000].map(value => `
+                <button class="chip ${amount === value ? "active" : ""}" type="button" data-amount="${value}">$${value.toLocaleString("en-US")}</button>
+              `).join("")}
+            </div>
+          </div>
+
+          <button class="select-field" type="button" data-open-drawer="depositChannel">
+            <label>${t("通道", "Channel")}</label>
+            <div class="field-value">
+              <strong>${selectedChannel ? selectedChannel.name : t("暂无可用通道", "No available channel")}</strong>
+              <span>${selectedChannel ? `${selectedChannel.currency} · $${selectedChannel.min.toLocaleString("en-US")} - $${selectedChannel.max.toLocaleString("en-US")}` : t("超出限额", "Out of range")}</span>
+            </div>
+          </button>
+          ${stickySubmit(t("提交存款", "Submit Deposit"))}
+        </div>
+      `;
+    }
+
+    function resolveWithdrawAccount(role) {
+      const accounts = withdrawSources(role);
+      if (appState.withdrawEntry === "tradeAccount") return appState.withdrawAccount || "MT5-204882";
+      if (appState.withdrawEntry === "wallet") return appState.withdrawAccount || "Wallet USD";
+      if (accounts.length === 1) return accounts[0][0];
+      return accounts.some(([id]) => id === appState.withdrawAccount) ? appState.withdrawAccount : null;
+    }
+
+    function withdrawSources(role) {
+      const accounts = depositAccounts(role);
+      if (isRegulatedTrader() && role === "trader") {
+        return [["Wallet USD", "Wallet", "$96,250.40"], ...accounts];
+      }
+      return accounts;
+    }
+
+    function payoutMethods(role) {
+      const partner = role === "partner";
+      return [
+        ["bank", partner ? "HSBC **** 2048" : "Chase **** 8012", t("银行卡", "Bank Card"), "$18", t("1-2 小时", "1-2 hours")],
+        ["ewallet", "Wise USD", t("电子钱包", "E-wallet"), "$6", t("30 分钟", "30 min")],
+        ["crypto", "USDT TRC20", t("电子钱包", "E-wallet"), "$2", t("10 分钟", "10 min")],
+        ["local", partner ? "Local Bank **** 7812" : "ACH **** 4410", t("本地转账", "Local Transfer"), "$0", t("1 个工作日", "1 business day")]
+      ];
+    }
+
+    function transferTypes(role) {
+      if (isRegulatedTrader() && role === "trader") {
+        return [["accountToAccount", t("交易账号互转", "Trading to Trading")]];
+      }
+      if (isRegulatedPartnerWalletTransfer(role)) {
+        return [["subWallet", t("下级 Wallet", "Sub Wallet")]];
+      }
+      if (isPublicTraderTransfer(role)) {
+        return [["trading", t("公共转账", "Public Transfer")]];
+      }
+      const types = [["trading", t("Wallet 转交易账号", "Wallet to Trading")]];
+      if (role === "partner" || isRegulatedTrader()) {
+        types.push(["accountToAccount", t("交易账号互转", "Trading to Trading")]);
+      }
+      if (role === "partner") {
+        types.push(["subWallet", t("下级 Wallet", "Sub Wallet")], ["subTrading", t("下级交易账号", "Sub Trading")]);
+      }
+      return types;
+    }
+
+    function transferDestinations(role) {
+      const type = (role === "partner" || isRegulatedTrader()) ? appState.transferType : "trading";
+      const sourceId = selectedTransferSource(role)?.[0] || accountTransferSourceId();
+      const accountTargets = depositAccounts(role).filter(([id]) => id !== sourceId);
+      if (isPublicTraderTransfer(role)) {
+        const source = selectedTransferSource(role);
+        if (!source) return [];
+        return source[1] === "Wallet" ? depositAccounts(role) : accountTargets;
+      }
+      const map = {
+        trading: [
+          ["MT5-204882", "Standard", "$22,180.42"],
+          ["MT5-309117", role === "partner" ? "Partner Pro" : "Pro", "$9,680.00"]
+        ],
+        accountToAccount: accountTargets,
+        subWallet: [
+          ["Mia Wang Wallet", t("下级 Wallet", "Sub Wallet"), "$188,200.00"],
+          ["Ryan Yu Wallet", t("下级 Wallet", "Sub Wallet"), "$112,600.00"]
+        ],
+        subTrading: [
+          ["Ryan Yu MT5", t("下级交易账号", "Sub Trading"), "$42,800.00"],
+          ["Sara Ng MT5", t("下级交易账号", "Sub Trading"), "$18,900.00"]
+        ]
+      };
+      return map[type] || map.trading;
+    }
+
+    function selectedTransferDestination(role) {
+      if (isPublicTraderTransfer(role) && !selectedTransferSource(role)) return null;
+      if (isPublicTraderTransfer(role) && !appState.transferTo) return null;
+      const destinations = transferDestinations(role);
+      return destinations.find(([id]) => id === appState.transferTo) || destinations[0];
+    }
+
+    function selectedTransferSource(role) {
+      if (isPublicTraderTransfer(role)) {
+        const sources = transferSources(role);
+        return sources.find(([id]) => id === appState.transferFrom) || null;
+      }
+      if (appState.transferType !== "accountToAccount") return null;
+      const accounts = depositAccounts(role);
+      return accounts.find(([id]) => id === accountTransferSourceId()) || accounts[0] || null;
+    }
+
+    function transferSourceAfter(role) {
+      if (isPublicTraderTransfer(role)) return selectedTransferSource(role)?.[2] || "—";
+      if (appState.transferType === "accountToAccount") return "$14,180.42";
+      return role === "partner" ? "$370,120.50" : "$88,250.40";
+    }
+
+    function transferSource(role) {
+      if (isPublicTraderTransfer(role)) {
+        const source = selectedTransferSource(role);
+        if (!source) return [t("未选择", "Not selected"), t("请选择转出来源", "Select transfer source")];
+        return [source[0], `${source[1]} · ${source[2]}`];
+      }
+      if (appState.transferType === "accountToAccount") {
+        const source = selectedTransferSource(role);
+        if (!source) return [accountTransferSourceId(), "—"];
+        return role === "partner"
+          ? [source[0], `${source[1]} · ${source[2]}`]
+          : [source[0], `${source[1]} · ${source[2]}`];
+      }
+      return role === "partner"
+        ? ["Partner Wallet", "$388,120.50"]
+        : ["Wallet USD", "$96,250.40"];
+    }
+
+    function transferScreen(role) {
+      const types = transferTypes(role);
+      if (!types.some(([id]) => id === appState.transferType)) {
+        appState.transferType = types[0][0];
+        appState.transferTo = null;
+      }
+      const source = transferSource(role);
+      const destination = selectedTransferDestination(role);
+      const amount = appState.transferAmount;
+      const blockedAccountTransfer = appState.transferType === "accountToAccount" && !canAccountToAccount(role);
+      const publicTraderTransfer = isPublicTraderTransfer(role);
+      const canChooseSource = publicTraderTransfer;
+      const canChooseDestination = !publicTraderTransfer || Boolean(selectedTransferSource(role));
+      const transferReady = publicTraderTransfer
+        ? Boolean(selectedTransferSource(role)) && Boolean(destination)
+        : appState.transferType !== "accountToAccount" || (Boolean(selectedTransferSource(role)) && Boolean(destination));
+
+      if (blockedAccountTransfer) {
+        return `
+          <div class="form">
+            <button class="select-field" type="button" aria-disabled="true">
+              <label>${t("从", "From")}</label>
+              <div class="field-value">
+                <strong>${source[0]}</strong>
+                <span>${source[1]}</span>
+              </div>
+            </button>
+            <div class="review-panel">
+              <div class="row"><span>${t("转账规则", "Transfer Rule")}</span><strong>${t("交易账号互转", "Trading to Trading")}</strong></div>
+              <div class="row"><span>${t("当前账号", "Current Accounts")}</span><strong>${depositAccounts(role).length}</strong></div>
+              <div class="row"><span>${t("处理方式", "Action")}</span><strong>${t("需至少 2 个交易账号", "At least 2 trading accounts required")}</strong></div>
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="form">
+          <button class="select-field" type="button" ${canChooseSource ? "data-open-drawer=\"transferFrom\"" : "aria-disabled=\"true\""}>
+            <label>${t("从", "From")}</label>
+            <div class="field-value">
+              <strong>${source[0]}</strong>
+              <span>${source[1]}</span>
+            </div>
+          </button>
+
+          ${types.length > 1 ? `
+            <div class="chips" style="margin-top:0">
+              ${types.map(([id, label]) => `<button class="chip ${appState.transferType === id ? "active" : ""}" type="button" data-transfer-type="${id}">${label}</button>`).join("")}
+            </div>
+          ` : ""}
+
+          <button class="select-field" type="button" data-open-drawer="transferTo" ${canChooseDestination ? "" : "aria-disabled=\"true\""}>
+            <label>${t("到", "To")}</label>
+            <div class="field-value">
+              <strong>${destination ? destination[0] : t("未选择", "Not selected")}</strong>
+              <span>${destination ? destination[1] : (canChooseDestination ? t("请选择转入目标", "Select destination") : t("先选择转出来源", "Select source first"))}</span>
+            </div>
+          </button>
+
+          <div class="amount-stage">
+            <label>${t("转账金额", "Transfer Amount")}</label>
+            <div class="amount-display"><span>$</span><strong>${amount.toLocaleString("en-US")}</strong></div>
+            <div class="chips">
+              ${[2000, 8000, 18000, 50000].map(value => `
+                <button class="chip ${amount === value ? "active" : ""}" type="button" data-transfer-amount="${value}">$${value.toLocaleString("en-US")}</button>
+              `).join("")}
+            </div>
+          </div>
+        </div>
+        ${transferReady ? `
+          <div class="section-title">${t("划转后", "After Transfer")}</div>
+          <div class="list">
+            ${item(source[0], t("可用余额", "Available Balance"), money(transferSourceAfter(role), t("预计", "Estimated")))}
+            ${item(destination[0], destination[1], money(`+$${amount.toLocaleString("en-US")}`, t("到账", "Credit")))}
+          </div>
+        ` : ""}
+        ${stickySubmit(t("立即转账", "Transfer Now"))}
+      `;
+    }
+
+    function withdrawScreen(role) {
+      const accounts = withdrawSources(role);
+      const selectedAccount = resolveWithdrawAccount(role);
+      const selectedAccountInfo = accounts.find(([id]) => id === selectedAccount);
+      const canChangeAccount = accounts.length > 1 && appState.withdrawEntry !== "tradeAccount" && appState.withdrawEntry !== "wallet";
+      const amount = appState.withdrawAmount;
+      const selectedMethod = selectedPayoutMethod(role);
+      const sourceLabel = isRegulatedTrader() && role === "trader" ? t("取款来源", "Withdrawal Source") : t("交易账号", "Trading Account");
+
+      return `
+        <div class="form">
+          <button class="select-field" type="button" data-open-drawer="withdrawAccount" ${canChangeAccount ? "" : "aria-disabled=\"true\""}>
+            <label>${sourceLabel}</label>
+            <div class="field-value">
+              <strong>${selectedAccountInfo ? `${selectedAccountInfo[0]} · ${selectedAccountInfo[1]}` : t("未选择", "Not selected")}</strong>
+              <span>${selectedAccountInfo ? selectedAccountInfo[2] : "—"}</span>
+            </div>
+          </button>
+
+          <div class="amount-stage">
+            <label>${t("取款金额", "Withdrawal Amount")}</label>
+            <div class="amount-display"><span>$</span><strong>${amount.toLocaleString("en-US")}</strong></div>
+            <div class="chips">
+              ${[1000, 5000, 12000, 36000].map(value => `
+                <button class="chip ${amount === value ? "active" : ""}" type="button" data-withdraw-amount="${value}">$${value.toLocaleString("en-US")}</button>
+              `).join("")}
+            </div>
+          </div>
+
+          <button class="select-field" type="button" data-open-drawer="withdrawMethod">
+            <label>${t("收款方式", "Receiving Method")}</label>
+            <div class="field-value">
+              <strong>${selectedMethod[1]}</strong>
+              <span>${selectedMethod[2]} · ${t("费用", "Fee")} ${selectedMethod[3]}</span>
+            </div>
+          </button>
+          ${stickySubmit(t("确认取款", "Confirm Withdrawal"))}
+        </div>
+      `;
+    }
+
+    function walletScreen(role) {
+      const partner = role === "partner";
+      const regulatedPartner = partner && isRegulatedPartner();
+      const walletActions = partner
+        ? regulatedPartner
+          ? `
+          <div class="quick-grid two">
+            <button class="quick" data-jump="transfer" data-transfer-type="subWallet" data-transfer-entry="partnerWallet"><span>${icon("wallet")}</span>${t("转到下级 Wallet", "To Sub Wallet")}</button>
+            <button class="quick" data-jump="withdraw"><span>${icon("minus")}</span>${t("取款", "Withdraw")}</button>
+          </div>
+        `
+          : `
+          <div class="quick-grid four">
+            <button class="quick" data-jump="transfer" data-transfer-type="trading"><span>${icon("chart")}</span>${t("转到交易账号", "To Trading")}</button>
+            <button class="quick" data-jump="transfer" data-transfer-type="subWallet"><span>${icon("wallet")}</span>${t("转到下级 Wallet", "To Sub Wallet")}</button>
+            <button class="quick" data-jump="transfer" data-transfer-type="subTrading"><span>${icon("users")}</span>${t("转到下级交易账号", "To Sub Trading")}</button>
+            <button class="quick" data-jump="withdraw"><span>${icon("minus")}</span>${t("取款", "Withdraw")}</button>
+          </div>
+        `
+        : isRegulatedTrader()
+          ? `
+          <div class="quick-grid one">
+            <button class="quick" data-jump="withdraw" data-entry="wallet"><span>${icon("minus")}</span>${t("取款", "Withdraw")}</button>
+          </div>
+        `
+        : `
+          <div class="quick-grid two">
+            <button class="quick" data-jump="transfer" data-transfer-type="trading"><span>${icon("chart")}</span>${t("转到交易账号", "To Trading")}</button>
+            <button class="quick" data-jump="withdraw"><span>${icon("minus")}</span>${t("取款", "Withdraw")}</button>
+          </div>
+        `;
+
+      return `
+        ${hero("Wallet USD", partner ? "$420,880.50" : "$96,250.40", [t("可用", "Available"), partner ? "$388,120.50" : "$96,250.40"], [t("冻结", "Frozen"), partner ? "$12,800.00" : "$2,180.00"])}
+        ${walletActions}
+        <div class="section-title">${t("最近 Wallet 流水", "Recent Wallet Records")}</div>
+        <div class="list">
+          ${(isRegulatedTrader() && !partner) || regulatedPartner ? "" : item(t("Wallet 转交易账号", "Wallet to Trading"), "Wallet → MT5-204882", badge(t("实时", "Instant"), "blue"))}
+          ${partner ? item(t("转到下级 Wallet", "To Sub Wallet"), "Partner Wallet → Mia Wang Wallet", badge(t("成功", "Done"), "green")) : ""}
+          ${partner && !regulatedPartner ? item(t("转到下级交易账号", "To Sub Trading"), "Partner Wallet → Ryan Yu MT5", badge(t("待审", "Review"), "amber")) : ""}
+          ${item(t("取款申请", "Withdrawal Request"), "Chase **** 8012", badge(t("待审", "Review"), "amber"))}
+        </div>
+      `;
+    }
+
+    const screens = {
+      client: {
+        overview: () => `
+          ${hero(t("总资产 USD", "Total Assets USD"), "$128,430.82", [t("可用", "Available"), "$96,250.40"], [t("冻结", "Frozen"), "$2,180.00"])}
+          ${publicFundActions()}
+          <div class="section-title">${t("资金入口", "Fund Entry")}</div>
+          <div class="list">
+            ${item("Wallet", isRegulatedTrader() ? t("仅支持取款", "Withdraw only") : t("支持转交易账号、取款", "Transfer to trading or withdraw"), money("$96,250.40", t("可用", "Available")))}
+            ${item(t("交易账号", "Trading Account"), "MT5-204882 · Standard", money("$22,180.42", t("净值", "Equity")))}
+          </div>
+          <div class="section-title">${t("资金动态", "Activity")} <small>${t("今日", "Today")}</small></div>
+          <div class="list">
+            ${item(t("入金到账", "Deposit received"), "USD 5,000 · Bank Transfer", badge(t("成功", "Done"), "green"))}
+            ${isRegulatedTrader()
+              ? canAccountToAccount("trader")
+                ? item(t("交易账号互转", "Trading to Trading"), "MT5-204882 → MT5-309117", badge(t("实时", "Instant"), "blue"))
+                : item(t("交易账号互转不可用", "Trading transfer unavailable"), t("当前仅 1 个交易账号", "Only 1 trading account"), badge(t("需 2 个账号", "Need 2 accounts"), "amber"))
+              : item(t("合约账户划转", "Contract transfer"), "Wallet → MT5-204882", badge(t("实时", "Instant"), "blue"))}
+            ${item(t("出金申请", "Withdrawal request"), "Chase **** 8012", badge(t("待审", "Review"), "amber"))}
+          </div>
+        `,
+        tradeAccount: () => tradingAccountScreen("trader"),
+        wallet: () => walletScreen("trader"),
+        deposit: () => depositScreen("trader"),
+        withdraw: () => withdrawScreen("trader"),
+        transfer: () => transferScreen("trader"),
+        records: () => `
+          <div class="toolbar">
+            <button class="chip active">${t("全部", "All")}</button>
+            <button class="chip">${t("存款", "Deposit")}</button>
+            <button class="chip">${t("取款", "Withdraw")}</button>
+            <button class="chip">${t("转账", "Transfer")}</button>
+          </div>
+          <div class="list">
+            ${item("Deposit", "Bank Transfer · 04/28 14:22", money("+$5,000", t("成功", "Done")))}
+            ${item("Transfer", "Wallet → MT5 · 04/28 11:05", money("-$8,000", t("实时", "Instant")))}
+            ${item("Withdrawal", "Chase **** 8012 · 04/27", money("-$12,000", t("待审", "Review")))}
+            ${item("Deposit", "USDT · 04/26", money("+$2,400", t("成功", "Done")))}
+            ${item("Adjustment", "Fee rebate · 04/24", money("+$18", t("入账", "Posted")))}
+          </div>
+        `,
+        profile: () => `
+          ${hero(t("账户等级", "Account Level"), "Verified", ["2FA", t("已启用", "Enabled")], [t("银行卡", "Bank Cards"), t("2 张", "2 Cards")], true)}
+          <div class="section-title">${t("常用设置", "Settings")}</div>
+          <div class="list">
+            ${item(t("收款账户", "Receiving Account"), "Chase **** 8012", badge(t("默认", "Default"), "blue"))}
+            ${item(t("资金密码", "Funds PIN"), t("上次更新 18 天前", "Updated 18 days ago"), badge(t("安全", "Secure"), "green"))}
+            ${item(t("通知", "Notifications"), "App Push / Email", badge(t("开启", "On"), "green"))}
+          </div>
+        `
+      },
+      ib: {
+        overview: () => `
+          ${hero(t("名下 Trader 资产", "Trader AUM"), "$8.42M", [t("本月入金", "Monthly Deposit"), "$620K"], [t("待跟进", "Follow-ups"), "18"])}
+          ${publicFundActions()}
+          <div class="section-title">${t("Partner Wallet", "Partner Wallet")}</div>
+          <div class="list">
+            ${item("Wallet", isRegulatedPartner() ? t("仅支持转下级 Wallet、取款", "To sub wallet or withdraw only") : t("支持转交易账号、下级 Wallet、下级交易账号、取款", "To trading, sub wallet, sub trading, or withdraw"), money("$388,120.50", t("可用", "Available")))}
+            ${item(t("下级资金", "Subordinate Funds"), "186 Traders", money("$8.42M", t("资产", "AUM")))}
+          </div>
+          <div class="section-title">${t("重点 Trader", "Key Traders")}</div>
+          <div class="list">
+            ${clientCard("AL", "Alex Lee", "$320,400", "72%", t("出金待审", "Withdrawal Review"))}
+            ${clientCard("MW", "Mia Wang", "$188,200", "45%", t("凭证缺失", "Missing Receipt"))}
+            ${clientCard("JC", "Jon Chen", "$82,900", "90%", t("活跃", "Active"))}
+          </div>
+        `,
+        tradeAccount: () => tradingAccountScreen("partner"),
+        wallet: () => walletScreen("partner"),
+        deposit: () => depositScreen("partner"),
+        transfer: () => transferScreen("partner"),
+        withdraw: () => withdrawScreen("partner"),
+        clients: () => `
+          <div class="toolbar">
+            <button class="chip active">${t("全部", "All")}</button>
+            <button class="chip">${t("大额", "Large")}</button>
+            <button class="chip">${t("失败", "Failed")}</button>
+            <button class="chip">${t("沉默", "Quiet")}</button>
+          </div>
+          <div class="list">
+            ${clientCard("AL", "Alex Lee", "$320,400", "72%", t("出金待审", "Withdrawal Review"))}
+            ${clientCard("MW", "Mia Wang", "$188,200", "45%", t("入金待补", "Deposit Pending"))}
+            ${clientCard("RY", "Ryan Yu", "$112,600", "68%", t("新增入金", "New Deposit"))}
+            ${clientCard("SN", "Sara Ng", "$74,800", "35%", t("失败提醒", "Failed Alert"))}
+          </div>
+        `,
+        alerts: () => `
+          <div class="list">
+            ${item("Mia Wang", t("付款凭证缺少银行流水号", "Receipt missing bank reference"), badge(t("提醒", "Remind"), "amber"))}
+            ${item("Alex Lee", t("大额出金进入双人审批", "Large withdrawal needs dual approval"), badge(t("关注", "Watch"), "red"))}
+            ${item("Sara Ng", t("USDT 入金地址过期", "USDT deposit address expired"), badge(t("处理", "Handle"), "amber"))}
+          </div>
+          <button class="primary">${t("发送批量提醒", "Send Batch Reminders")}</button>
+        `,
+        records: () => `
+          <div class="list">
+            ${item("Alex Lee", "Withdrawal · 04/28", money("-$28,000", t("待审", "Review")))}
+            ${item("Mia Wang", "Deposit · 04/28", money("+$10,000", t("待补", "Pending")))}
+            ${item("Ryan Yu", "Transfer · 04/27", money("$5,000", t("实时", "Instant")))}
+          </div>
+        `,
+        profile: () => `
+          ${hero(t("返佣账户", "Rebate Account"), "$42,810.25", [t("本周", "This Week"), "$3,280"], ["Trader", "186"], true)}
+          <div class="list">
+            ${item(t("开户链接", "Referral Link"), "harvey.finance/partner/2048", badge(t("启用", "Enabled"), "green"))}
+            ${item(t("Trader 备注", "Trader Notes"), t("本月新增 24 条", "24 added this month"), badge(t("同步", "Synced"), "blue"))}
+          </div>
+        `
+      },
+      finance: {
+        queue: () => `
+          ${hero(t("待处理", "Pending"), "42", [t("入金", "Deposits"), "25"], [t("出金", "Withdrawals"), "17"], true)}
+          <div class="section-title">${t("队列", "Queue")}</div>
+          <div class="list">
+            ${item(t("入金审核", "Deposit Review"), "USD 5,000 · Alex Lee", badge(t("新", "New"), "blue"))}
+            ${item(t("出金打款", "Payout"), "USD 12,000 · Chase", badge(t("复核", "Review"), "amber"))}
+            ${item(t("异常匹配", "Match Exception"), "USD 2,400 · Reference mismatch", badge(t("异常", "Issue"), "red"))}
+          </div>
+        `,
+        depositReview: () => `
+          <div class="review-panel">
+            <div class="row"><span>Trader</span>Alex Lee</div>
+            <div class="row"><span>${t("账户", "Account")}</span>MT5-204882</div>
+            <div class="row"><span>${t("金额", "Amount")}</span>USD 5,000</div>
+            <div class="row"><span>${t("通道", "Channel")}</span>Bank Transfer</div>
+            <div class="row"><span>${t("凭证", "Receipt")}</span>receipt_0428.png</div>
+          </div>
+          <div class="split" style="margin-top:12px">
+            <button class="secondary">${t("驳回", "Reject")}</button>
+            <button class="primary" style="margin-top:0">${t("通过", "Approve")}</button>
+          </div>
+          <div class="section-title">${t("匹配结果", "Match Result")}</div>
+          <div class="list">
+            ${item(t("银行流水", "Bank Entry"), "Reference 804211", badge(t("匹配", "Matched"), "green"))}
+            ${item(t("付款人", "Payer"), "Alex Lee", badge(t("一致", "Match"), "green"))}
+          </div>
+        `,
+        payout: () => `
+          <div class="review-panel">
+            <div class="row"><span>Trader</span>Alex Lee</div>
+            <div class="row"><span>${t("金额", "Amount")}</span>USD 12,000</div>
+            <div class="row"><span>${t("银行", "Bank")}</span>Chase **** 8012</div>
+            <div class="row"><span>${t("手续费", "Fee")}</span>USD 18</div>
+            <div class="row"><span>${t("复核", "Review")}</span>Level 2</div>
+          </div>
+          <button class="primary">${t("确认打款", "Confirm Payout")}</button>
+          <div class="section-title">${t("付款批次", "Payout Batches")}</div>
+          <div class="list">
+            ${item("Batch #F-0428-03", t("5 笔 · $44,800", "5 items · $44,800"), badge(t("打开", "Open"), "blue"))}
+            ${item("Batch #F-0428-02", t("12 笔 · $96,200", "12 items · $96,200"), badge(t("完成", "Done"), "green"))}
+          </div>
+        `,
+        reconcile: () => `
+          ${hero(t("今日对账", "Today Reconciled"), "96.8%", [t("自动匹配", "Auto Match"), "284"], [t("人工处理", "Manual"), "9"])}
+          <div class="section-title">${t("异常项", "Exceptions")}</div>
+          <div class="list">
+            ${item(t("Reference 缺失", "Missing Reference"), "USD 2,400 · USDT", badge(t("处理", "Handle"), "amber"))}
+            ${item(t("金额差异", "Amount Difference"), "USD 18 · Fee", badge(t("校准", "Adjust"), "blue"))}
+            ${item(t("重复凭证", "Duplicate Receipt"), "receipt_0427.png", badge(t("锁定", "Locked"), "red"))}
+          </div>
+        `
+      },
+      risk: {
+        alerts: () => `
+          <div class="risk-score"><strong>87</strong><span>${t("风险热度", "Risk Heat")}</span></div>
+          <div class="section-title">${t("预警", "Alerts")}</div>
+          <div class="list">
+            ${item(t("大额出金", "Large Withdrawal"), "Alex Lee · USD 28,000", badge(t("高", "High"), "red"))}
+            ${item(t("频繁划转", "Frequent Transfer"), t("Wallet ⇄ Contract · 12 次", "Wallet ⇄ Contract · 12 times"), badge(t("中", "Mid"), "amber"))}
+            ${item(t("设备变更", "Device Change"), "New device · Singapore", badge(t("中", "Mid"), "amber"))}
+          </div>
+        `,
+        review: () => `
+          <div class="review-panel">
+            <div class="row"><span>${t("申请", "Request")}</span>Withdrawal</div>
+            <div class="row"><span>Trader</span>Alex Lee</div>
+            <div class="row"><span>${t("金额", "Amount")}</span>USD 28,000</div>
+            <div class="row"><span>${t("命中", "Hit")}</span>${t("大额 + 新设备", "Large + New Device")}</div>
+            <div class="row"><span>KYC</span>Verified</div>
+          </div>
+          <div class="split" style="margin-top:12px">
+            <button class="secondary">${t("冻结", "Freeze")}</button>
+            <button class="primary" style="margin-top:0">${t("放行", "Release")}</button>
+          </div>
+          <div class="section-title">${t("轨迹", "Trail")}</div>
+          <div class="list">
+            ${item(t("登录设备", "Login Device"), "iPhone 15 Pro · SG", badge(t("新", "New"), "amber"))}
+            ${item(t("历史出金", "Withdrawal History"), t("30d · 4 笔", "30d · 4 items"), badge(t("正常", "Normal"), "green"))}
+          </div>
+        `,
+        rules: () => `
+          <div class="list">
+            ${item(t("单笔出金上限", "Single Withdrawal Limit"), "Level 2 · $10,000", badge(t("启用", "On"), "green"))}
+            ${item(t("新设备冷静期", "New Device Cooldown"), "24h", badge(t("启用", "On"), "green"))}
+            ${item(t("跨实体划转", "Cross-entity Transfer"), t("人工复核", "Manual Review"), badge(t("启用", "On"), "green"))}
+            ${item(t("高频划转", "High-frequency Transfer"), t("10 次 / 24h", "10 times / 24h"), badge(t("启用", "On"), "green"))}
+          </div>
+          <button class="primary">${t("新增规则", "Add Rule")}</button>
+        `,
+        records: () => `
+          <div class="list">
+            ${item(t("放行", "Release"), "Withdrawal · Alex Lee · 14:22", badge(t("完成", "Done"), "green"))}
+            ${item(t("冻结", "Freeze"), "Transfer · Mia Wang · 13:05", badge(t("有效", "Active"), "red"))}
+            ${item(t("规则更新", "Rule Update"), t("新设备冷静期 · 11:40", "New device cooldown · 11:40"), badge(t("审计", "Audit"), "blue"))}
+          </div>
+        `,
+        profile: () => `
+          ${hero(t("风控策略", "Risk Rules"), "18", [t("启用", "Enabled"), "16"], [t("观察", "Watch"), "2"], true)}
+          <div class="list">
+            ${item(t("审批权限", "Approval Level"), "Level 3", badge(t("有效", "Valid"), "green"))}
+            ${item(t("值班", "On Duty"), "Asia / Shanghai", badge(t("在线", "Online"), "blue"))}
+          </div>
+        `
+      }
+    };
+
+    function clientCard(initials, name, assets, progress, status) {
+      const statusText = String(status).toLowerCase();
+      const statusTone = status.includes("待") || status.includes("缺") || status.includes("失败") || statusText.includes("pending") || statusText.includes("missing") || statusText.includes("failed") || statusText.includes("review") ? "amber" : "green";
+      return `
+        <div class="client-card">
+          <div class="client-head">
+            <div class="avatar-row">
+              <div class="avatar">${initials}</div>
+              <div class="item-main">
+                <strong>${name}</strong>
+                <span>${assets}</span>
+              </div>
+            </div>
+            ${badge(status, statusTone)}
+          </div>
+          <div class="progress"><b style="width:${progress}"></b></div>
+        </div>
+      `;
+    }
+
+    function currentScenes() {
+      return roles[appState.role].scenes;
+    }
+
+    function sceneName(sceneId) {
+      const found = currentScenes().find(([id]) => id === sceneId);
+      return found ? (appState.lang === "zh" ? found[1] : found[2]) : "";
+    }
+
+    function ensureScene() {
+      const ids = currentScenes().map(([id]) => id);
+      if (!ids.includes(appState.scene)) {
+        appState.scene = ids[0];
+      }
+    }
+
+    function roleKind() {
+      return appState.role === "ib" ? "partner" : "trader";
+    }
+
+    function closeDrawer() {
+      appState.activeDrawer = null;
+      renderDrawer();
+    }
+
+    function renderControls() {
+      document.documentElement.lang = appState.lang === "zh" ? "zh-CN" : "en";
+      document.body.dataset.theme = appState.theme;
+      controlTitle.textContent = t("控制面板", "Control Panel");
+      regulatoryModeLabel.textContent = t("监管层", "Regulatory Layer");
+      roleLabel.textContent = t("角色", "Role");
+      sceneLabel.textContent = t("场景", "Scene");
+      languageLabel.textContent = t("语言", "Language");
+      themeLabel.textContent = t("主题", "Theme");
+      accountModeLabel.textContent = t("账号情况", "Account Mode");
+
+      roleSelect.innerHTML = Object.entries(roles)
+        .map(([id, role]) => `<option value="${id}" ${id === appState.role ? "selected" : ""}>${roleName(role)}</option>`)
+        .join("");
+
+      sceneSelect.innerHTML = currentScenes()
+        .map(([id, zh, en]) => `<option value="${id}" ${id === appState.scene ? "selected" : ""}>${t(zh, en)}</option>`)
+        .join("");
+
+      languageSelect.value = appState.lang;
+      themeSelect.value = appState.theme;
+      accountModeSelect.value = appState.accountMode;
+      regulatoryModeSelect.value = appState.regulatoryMode;
+
+      regulatoryModeSelect.options[0].textContent = t("非监管地区", "Non-regulated");
+      regulatoryModeSelect.options[1].textContent = t("监管地区", "Regulated");
+      accountModeSelect.options[0].textContent = t("多个交易账号", "Multiple Accounts");
+      accountModeSelect.options[1].textContent = t("单个交易账号", "Single Account");
+
+      roleButtons.innerHTML = Object.entries(roles)
+        .map(([id, role]) => `<button type="button" data-role="${id}" class="${id === appState.role ? "active" : ""}">${roleName(role)}</button>`)
+        .join("");
+
+      panelState.textContent = `${appState.regulatoryMode === "regulated" ? t("监管", "Regulated") : t("非监管", "Non-regulated")} / ${roleName(roles[appState.role])} / ${sceneName(appState.scene)}`;
+    }
+
+    function renderTabbar() {
+      tabbar.innerHTML = roles[appState.role].tabs
+        .map(([scene, iconName, zh, en]) => `
+          <button class="tab ${scene === appState.scene ? "active" : ""}" type="button" data-tab="${scene}">
+            <b>${icon(iconName)}</b>
+            ${t(zh, en)}
+          </button>
+        `)
+        .join("");
+    }
+
+    function renderDrawer() {
+      const drawer = appState.activeDrawer;
+      drawerBackdrop.classList.toggle("open", Boolean(drawer));
+      bottomDrawer.classList.toggle("open", Boolean(drawer));
+
+      if (!drawer) {
+        drawerTitle.textContent = t("选择", "Select");
+        drawerList.innerHTML = "";
+        return;
+      }
+
+      const kind = roleKind();
+
+      if (drawer === "depositAccount" || drawer === "withdrawAccount") {
+        const isDeposit = drawer === "depositAccount";
+        const accounts = isDeposit ? depositAccounts(kind) : withdrawSources(kind);
+        const selected = isDeposit ? resolveDepositAccount(kind) : resolveWithdrawAccount(kind);
+        drawerTitle.textContent = isDeposit ? t("交易账号", "Trading Account") : (isRegulatedTrader() && kind === "trader" ? t("取款来源", "Withdrawal Source") : t("交易账号", "Trading Account"));
+        drawerList.innerHTML = accounts.map(([id, type, equity]) => `
+          <button class="account-option ${selected === id ? "active" : ""}" type="button" data-select-${isDeposit ? "deposit" : "withdraw"}-account="${id}">
+            <div><strong>${id}</strong><span>${type}</span></div>
+            ${money(equity, isDeposit ? t("净值", "Equity") : t("可取", "Withdrawable"))}
+          </button>
+        `).join("");
+        return;
+      }
+
+      if (drawer === "depositChannel") {
+        const channels = depositChannels(appState.depositAmount);
+        const selected = selectedDepositChannel(appState.depositAmount);
+        drawerTitle.textContent = t("通道", "Channel");
+        drawerList.innerHTML = channels.map(channel => `
+          <button class="channel-card ${selected && selected.id === channel.id ? "active" : ""} ${channel.enabled ? "" : "disabled"}" type="button" data-select-deposit-channel="${channel.id}" ${channel.enabled ? "" : "aria-disabled=\"true\""}>
+            <div><strong>${channel.name}</strong><span>${channel.currency} · $${channel.min.toLocaleString("en-US")} - $${channel.max.toLocaleString("en-US")}</span></div>
+            ${channel.enabled ? badge(channel.requiresProof ? t("凭证", "Proof") : t("可选", "Available"), channel.requiresProof ? "amber" : "green") : badge(t("超限", "Blocked"), "gray")}
+          </button>
+        `).join("");
+        return;
+      }
+
+      if (drawer === "withdrawMethod") {
+        const methods = payoutMethods(kind);
+        const selected = selectedPayoutMethod(kind);
+        drawerTitle.textContent = t("收款方式", "Receiving Method");
+        drawerList.innerHTML = methods.map(method => `
+          <button class="channel-card ${selected[0] === method[0] ? "active" : ""}" type="button" data-select-withdraw-method="${method[0]}">
+            <div><strong>${method[1]}</strong><span>${method[2]} · ${t("费用", "Fee")} ${method[3]} · ${method[4]}</span></div>
+            ${badge(selected[0] === method[0] ? t("已选", "Selected") : t("可选", "Available"), selected[0] === method[0] ? "blue" : "green")}
+          </button>
+        `).join("");
+        return;
+      }
+
+      if (drawer === "transferFrom") {
+        const accounts = transferSources(kind);
+        const selected = selectedTransferSource(kind);
+        drawerTitle.textContent = t("选择转出来源", "Select Source");
+        drawerList.innerHTML = accounts.map(account => `
+          <button class="account-option ${selected && selected[0] === account[0] ? "active" : ""}" type="button" data-select-transfer-from="${account[0]}">
+            <div><strong>${account[0]}</strong><span>${account[1]}</span></div>
+            ${money(account[2], t("可用", "Available"))}
+          </button>
+        `).join("");
+        return;
+      }
+
+      if (drawer === "transferTo") {
+        const destinations = transferDestinations(kind);
+        const selected = selectedTransferDestination(kind);
+        drawerTitle.textContent = t("选择去向", "Select Destination");
+        if (!destinations.length) {
+          drawerList.innerHTML = `
+            <div class="review-panel">
+              <div class="row"><span>${t("可选目标", "Available Targets")}</span><strong>0</strong></div>
+              <div class="row"><span>${t("提示", "Hint")}</span><strong>${t("需至少 2 个交易账号", "At least 2 trading accounts required")}</strong></div>
+            </div>
+          `;
+          return;
+        }
+        drawerList.innerHTML = destinations.map(destination => `
+          <button class="account-option ${selected && selected[0] === destination[0] ? "active" : ""}" type="button" data-select-transfer-to="${destination[0]}">
+            <div><strong>${destination[0]}</strong><span>${destination[1]}</span></div>
+            ${money(destination[2], t("可用", "Available"))}
+          </button>
+        `).join("");
+      }
+    }
+
+    function renderToast() {
+      toast.textContent = appState.toast;
+      toast.classList.toggle("show", Boolean(appState.toast));
+    }
+
+    function showToast(message) {
+      appState.toast = message;
+      renderToast();
+      window.clearTimeout(toastTimer);
+      toastTimer = window.setTimeout(() => {
+        appState.toast = "";
+        renderToast();
+      }, 1800);
+    }
+
+    function resetDepositStep() {
+      appState.depositStep = 1;
+      appState.depositProof = false;
+    }
+
+    function submitCurrentFlow() {
+      const kind = roleKind();
+      if (appState.scene === "deposit") {
+        const channel = selectedDepositChannel(appState.depositAmount);
+        if (!resolveDepositAccount(kind) || !channel) return;
+        if (channel.requiresProof && appState.depositStep === 1) {
+          appState.depositStep = 2;
+          appState.depositProof = false;
+          renderScreen();
+          showToast(t("上传转账凭证", "Upload transfer proof"));
+          return;
+        }
+        if (channel.requiresProof && !appState.depositProof) return;
+        showToast(t("存款申请已提交", "Deposit submitted"));
+        return;
+      }
+      if (appState.scene === "withdraw") {
+        if (!resolveWithdrawAccount(kind) || !selectedPayoutMethod(kind)) return;
+        showToast(t("取款申请已提交", "Withdrawal submitted"));
+        return;
+      }
+      if (appState.scene === "transfer") {
+        if (isPublicTraderTransfer(kind) && !selectedTransferSource(kind)) return;
+        if (!selectedTransferDestination(kind)) return;
+        showToast(t("转账已完成", "Transfer completed"));
+      }
+    }
+
+    function renderFlowAction() {
+      let label = "";
+      let disabled = false;
+      const kind = roleKind();
+
+      if (appState.scene === "deposit" && (appState.role === "client" || appState.role === "ib")) {
+        const channel = selectedDepositChannel(appState.depositAmount);
+        label = appState.depositStep === 2 ? t("提交凭证", "Submit Proof") : t("提交存款", "Submit Deposit");
+        disabled = !resolveDepositAccount(kind) || !channel || (appState.depositStep === 2 && channel.requiresProof && !appState.depositProof);
+      }
+
+      if (appState.scene === "withdraw" && (appState.role === "client" || appState.role === "ib")) {
+        label = t("确认取款", "Confirm Withdrawal");
+        disabled = !resolveWithdrawAccount(kind);
+      }
+
+      if (appState.scene === "transfer" && (appState.role === "client" || appState.role === "ib")) {
+        label = t("立即转账", "Transfer Now");
+        disabled = (isPublicTraderTransfer(kind) && !selectedTransferSource(kind)) || !selectedTransferDestination(kind);
+      }
+
+      flowAction.classList.toggle("show", Boolean(label));
+      flowAction.innerHTML = label ? `<button class="primary" type="button" data-submit-flow ${disabled ? "disabled" : ""}>${label}</button>` : "";
+    }
+
+    function renderScreen() {
+      ensureScene();
+      const role = roles[appState.role];
+      const renderer = screens[appState.role][appState.scene] || screens[appState.role][role.scenes[0][0]];
+      title.textContent = sceneName(appState.scene);
+      roleChip.textContent = role.chip;
+      screen.innerHTML = renderer();
+      renderTabbar();
+      renderControls();
+      renderFlowAction();
+      renderDrawer();
+      renderToast();
+    }
+
+    roleSelect.addEventListener("change", (event) => {
+      appState.role = event.target.value;
+      appState.depositEntry = "home";
+      appState.depositAccount = null;
+      resetDepositStep();
+      appState.withdrawEntry = "home";
+      appState.withdrawAccount = null;
+      resetTransfer(isRegulatedTrader() ? "accountToAccount" : "trading", isRegulatedTrader() ? "tradeAccount" : "wallet");
+      appState.activeDrawer = null;
+      ensureScene();
+      renderScreen();
+    });
+
+    sceneSelect.addEventListener("change", (event) => {
+      appState.scene = event.target.value;
+      if (appState.scene === "deposit") {
+        appState.depositEntry = "home";
+        appState.depositAccount = null;
+        resetDepositStep();
+      }
+      if (appState.scene === "withdraw") {
+        appState.withdrawEntry = "home";
+        appState.withdrawAccount = null;
+      }
+      appState.activeDrawer = null;
+      renderScreen();
+    });
+
+    languageSelect.addEventListener("change", (event) => {
+      appState.lang = event.target.value;
+      renderScreen();
+    });
+
+    themeSelect.addEventListener("change", (event) => {
+      appState.theme = event.target.value;
+      renderScreen();
+    });
+
+    regulatoryModeSelect.addEventListener("change", (event) => {
+      appState.regulatoryMode = event.target.value;
+      appState.depositEntry = "home";
+      appState.depositAccount = null;
+      resetDepositStep();
+      appState.withdrawEntry = "home";
+      appState.withdrawAccount = null;
+      resetTransfer(isRegulatedTrader() ? "accountToAccount" : "trading", isRegulatedTrader() ? "tradeAccount" : "wallet");
+      appState.activeDrawer = null;
+      renderScreen();
+    });
+
+    accountModeSelect.addEventListener("change", (event) => {
+      appState.accountMode = event.target.value;
+      appState.depositAccount = null;
+      resetDepositStep();
+      appState.withdrawAccount = null;
+      renderScreen();
+    });
+
+    roleButtons.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-role]");
+      if (!button) return;
+      appState.role = button.dataset.role;
+      appState.depositEntry = "home";
+      appState.depositAccount = null;
+      resetDepositStep();
+      appState.withdrawEntry = "home";
+      appState.withdrawAccount = null;
+      resetTransfer(isRegulatedTrader() ? "accountToAccount" : "trading", isRegulatedTrader() ? "tradeAccount" : "wallet");
+      appState.activeDrawer = null;
+      ensureScene();
+      renderScreen();
+    });
+
+    tabbar.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-tab]");
+      if (!button) return;
+      appState.scene = button.dataset.tab;
+      if (appState.scene !== "deposit") {
+        appState.depositEntry = appState.scene === "tradeAccount" ? "tradeAccount" : "home";
+        resetDepositStep();
+      }
+      if (appState.scene !== "withdraw") {
+        appState.withdrawEntry = appState.scene === "tradeAccount" ? "tradeAccount" : "home";
+      }
+      appState.activeDrawer = null;
+      renderScreen();
+    });
+
+    screen.addEventListener("click", (event) => {
+      const drawerButton = event.target.closest("[data-open-drawer]");
+      if (drawerButton) {
+        if (drawerButton.getAttribute("aria-disabled") === "true") return;
+        appState.activeDrawer = drawerButton.dataset.openDrawer;
+        renderDrawer();
+        return;
+      }
+
+      const amountButton = event.target.closest("[data-amount]");
+      if (amountButton) {
+        appState.depositAmount = Number(amountButton.dataset.amount);
+        resetDepositStep();
+        renderScreen();
+        return;
+      }
+
+      const uploadProofButton = event.target.closest("[data-upload-proof]");
+      if (uploadProofButton) {
+        appState.depositProof = true;
+        renderScreen();
+        showToast(t("凭证已选择", "Proof selected"));
+        return;
+      }
+
+      const withdrawAmountButton = event.target.closest("[data-withdraw-amount]");
+      if (withdrawAmountButton) {
+        appState.withdrawAmount = Number(withdrawAmountButton.dataset.withdrawAmount);
+        renderScreen();
+        return;
+      }
+
+      const transferAmountButton = event.target.closest("[data-transfer-amount]");
+      if (transferAmountButton) {
+        appState.transferAmount = Number(transferAmountButton.dataset.transferAmount);
+        renderScreen();
+        return;
+      }
+
+      const transferTypeButton = event.target.closest("[data-transfer-type]");
+      if (transferTypeButton && !transferTypeButton.hasAttribute("data-jump")) {
+        const nextType = transferTypeButton.dataset.transferType;
+        resetTransfer(nextType, nextType === "accountToAccount" ? "tradeAccount" : "wallet");
+        renderScreen();
+        return;
+      }
+
+      const accountButton = event.target.closest("[data-account]");
+      if (accountButton) {
+        appState.depositAccount = accountButton.dataset.account;
+        renderScreen();
+        return;
+      }
+
+      const withdrawAccountButton = event.target.closest("[data-withdraw-account]");
+      if (withdrawAccountButton) {
+        appState.withdrawAccount = withdrawAccountButton.dataset.withdrawAccount;
+        renderScreen();
+        return;
+      }
+
+      const button = event.target.closest("[data-jump]");
+      if (!button) return;
+      if (button.getAttribute("aria-disabled") === "true") {
+        showToast(t("需至少 2 个交易账号", "At least 2 trading accounts required"));
+        return;
+      }
+      appState.scene = button.dataset.jump;
+      if (appState.scene === "deposit") {
+        appState.depositEntry = button.dataset.entry || "home";
+        appState.depositAccount = appState.depositEntry === "tradeAccount" ? (button.dataset.accountId || "MT5-204882") : null;
+        resetDepositStep();
+      }
+      if (appState.scene === "withdraw") {
+        appState.withdrawEntry = button.dataset.entry || "home";
+        if (appState.withdrawEntry === "tradeAccount") {
+          appState.withdrawAccount = button.dataset.accountId || "MT5-204882";
+        } else if (appState.withdrawEntry === "wallet") {
+          appState.withdrawAccount = "Wallet USD";
+        } else {
+          appState.withdrawAccount = null;
+        }
+      }
+      if (appState.scene === "transfer") {
+        const nextType = button.dataset.transferType || (isRegulatedTrader() ? "accountToAccount" : "trading");
+        const nextEntry = button.dataset.transferEntry || (nextType === "accountToAccount" ? "tradeAccount" : "wallet");
+        resetTransfer(nextType, nextEntry);
+      }
+      renderScreen();
+    });
+
+    drawerBackdrop.addEventListener("click", closeDrawer);
+
+    bottomDrawer.addEventListener("click", (event) => {
+      if (event.target.closest("[data-close-drawer]")) {
+        closeDrawer();
+        return;
+      }
+
+      const depositAccount = event.target.closest("[data-select-deposit-account]");
+      if (depositAccount) {
+        appState.depositAccount = depositAccount.dataset.selectDepositAccount;
+        resetDepositStep();
+        appState.activeDrawer = null;
+        renderScreen();
+        return;
+      }
+
+      const withdrawAccount = event.target.closest("[data-select-withdraw-account]");
+      if (withdrawAccount) {
+        appState.withdrawAccount = withdrawAccount.dataset.selectWithdrawAccount;
+        appState.activeDrawer = null;
+        renderScreen();
+        return;
+      }
+
+      const depositChannel = event.target.closest("[data-select-deposit-channel]");
+      if (depositChannel) {
+        if (depositChannel.getAttribute("aria-disabled") === "true") return;
+        appState.depositChannel = depositChannel.dataset.selectDepositChannel;
+        resetDepositStep();
+        appState.activeDrawer = null;
+        renderScreen();
+        return;
+      }
+
+      const withdrawMethod = event.target.closest("[data-select-withdraw-method]");
+      if (withdrawMethod) {
+        appState.withdrawMethod = withdrawMethod.dataset.selectWithdrawMethod;
+        appState.activeDrawer = null;
+        renderScreen();
+        return;
+      }
+
+      const transferTo = event.target.closest("[data-select-transfer-to]");
+      if (transferTo) {
+        appState.transferTo = transferTo.dataset.selectTransferTo;
+        appState.activeDrawer = null;
+        renderScreen();
+        return;
+      }
+
+      const transferFrom = event.target.closest("[data-select-transfer-from]");
+      if (transferFrom) {
+        appState.transferFrom = transferFrom.dataset.selectTransferFrom;
+        appState.transferTo = null;
+        appState.activeDrawer = null;
+        renderScreen();
+      }
+    });
+
+    flowAction.addEventListener("click", (event) => {
+      const submitButton = event.target.closest("[data-submit-flow]");
+      if (!submitButton || submitButton.disabled) return;
+      submitCurrentFlow();
+    });
+
+    backButton.addEventListener("click", () => {
+      if (appState.activeDrawer) {
+        closeDrawer();
+        return;
+      }
+      if (appState.scene === "deposit" && appState.depositStep === 2) {
+        resetDepositStep();
+        renderScreen();
+        return;
+      }
+      if (appState.role === "client" || appState.role === "ib") {
+        appState.scene = appState.scene === "overview" ? "records" : "overview";
+      } else {
+        appState.scene = roles[appState.role].tabs[0][0];
+      }
+      appState.depositEntry = "home";
+      appState.withdrawEntry = "home";
+      renderScreen();
+    });
+
+    messageButton.addEventListener("click", () => {
+      showToast(t("暂无新的资金通知", "No new fund notices"));
+    });
+
+    if ("scrollRestoration" in history) {
+      history.scrollRestoration = "manual";
+    }
+
+    renderScreen();
+    window.scrollTo(0, 0);
+  </script>
+</body>
+</html>
