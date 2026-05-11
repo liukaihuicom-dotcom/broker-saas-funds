@@ -1,0 +1,2313 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Open Account Bottom Sheet</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: oklch(96.5% 0.008 145);
+      --phone: oklch(98.5% 0.006 145);
+      --mask: rgba(0, 0, 0, .5);
+      --sheet: oklch(99% 0.004 145);
+      --surface: oklch(99% 0.004 145);
+      --surface-raised: oklch(97.6% 0.006 145);
+      --ink: oklch(24% 0.012 145);
+      --sub: oklch(46% 0.012 145);
+      --muted: oklch(58% 0.012 145);
+      --soft: oklch(96% 0.007 145);
+      --line: oklch(89% 0.01 145);
+      --line-strong: rgba(0, 0, 0, .2);
+      --action: oklch(86% 0.19 132);
+      --action-ink: oklch(23% 0.08 135);
+      --accent: oklch(81% 0.11 195);
+      --success: oklch(47% 0.13 155);
+      --warning: oklch(58% 0.11 75);
+      --danger: oklch(54% 0.19 25);
+      --info: oklch(50% 0.16 255);
+      --info-bg: oklch(96.5% 0.018 255);
+      --success-bg: oklch(96.5% 0.02 155);
+      --warning-bg: oklch(96.5% 0.032 78);
+      --error-bg: oklch(96.5% 0.026 25);
+      --airbnb-rausch: #ff385c;
+      --airbnb-rausch-active: #e00b41;
+      --airbnb-ink: oklch(24% 0.006 70);
+      --airbnb-body: oklch(36% 0.006 70);
+      --airbnb-muted: oklch(51% 0.006 70);
+      --airbnb-line: oklch(88% 0.004 70);
+      --airbnb-soft: oklch(97.5% 0.004 70);
+      --airbnb-rose-soft: oklch(97% 0.018 18);
+      --radius-sheet: 24px;
+      --radius-control: 10px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--page);
+      color: var(--ink);
+      letter-spacing: 0;
+    }
+
+    button,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .stage {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 28px 24px;
+    }
+
+    .phone {
+      position: relative;
+      width: min(390px, calc(100vw - 24px));
+      height: min(844px, calc(100vh - 56px));
+      min-height: 700px;
+      overflow: hidden;
+      border-radius: 30px;
+      background: var(--surface-raised);
+      box-shadow: 0 22px 70px rgba(24, 31, 42, .22);
+    }
+
+    .phone::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, .42), rgba(255, 255, 255, 0) 28%),
+        radial-gradient(circle at 50% 24%, rgba(255, 255, 255, .52), transparent 26%);
+    }
+
+    .app-hint {
+      position: absolute;
+      inset: 48px 22px auto;
+      z-index: 1;
+      color: rgba(30, 35, 43, .28);
+      font-size: 18px;
+      font-weight: 760;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+
+    .mask {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      background: var(--mask);
+    }
+
+    .mask[data-mode="page"] {
+      align-items: stretch;
+      background: var(--phone);
+    }
+
+    .sheet {
+      width: 100%;
+      max-height: 100%;
+      overflow: hidden;
+      border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+      background: var(--sheet);
+      animation: rise .32s cubic-bezier(.2, .8, .2, 1);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .mask[data-mode="page"] .sheet {
+      height: 100%;
+      max-height: none;
+      border-radius: 0;
+      background: var(--phone);
+      animation: none;
+    }
+
+    @keyframes rise {
+      from {
+        transform: translateY(26px);
+        opacity: .85;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .sheet-top {
+      height: 24px;
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+    }
+
+    .mask[data-mode="page"] .sheet-top {
+      display: none;
+    }
+
+    .handle {
+      width: 40px;
+      height: 4px;
+      border-radius: 999px;
+      background: var(--line-strong);
+    }
+
+    .page-nav {
+      height: 90px;
+      flex: 0 0 auto;
+      padding: 50px 16px 0;
+      display: grid;
+      grid-template-columns: 40px minmax(0, 1fr) 40px;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--line);
+      background: var(--phone);
+    }
+
+    .page-nav[hidden] {
+      display: none;
+    }
+
+    .page-nav button {
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--ink);
+      font-size: 24px;
+      line-height: 1;
+      font-weight: 520;
+    }
+
+    .page-nav span {
+      min-width: 0;
+      color: var(--ink);
+      font-size: 16px;
+      line-height: 1.2;
+      font-weight: 720;
+      text-align: center;
+    }
+
+    .sheet-content {
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding: 22px 16px 18px;
+      display: grid;
+      justify-items: center;
+      gap: 14px;
+    }
+
+    .mask[data-mode="page"] .sheet-content {
+      flex: 1 1 auto;
+      padding: 22px 20px 20px;
+      align-content: start;
+      justify-items: stretch;
+      gap: 14px;
+    }
+
+    .visual {
+      width: 160px;
+      height: 80px;
+      display: grid;
+      place-items: center;
+    }
+
+    .visual svg {
+      width: 124px;
+      height: 82px;
+      overflow: visible;
+    }
+
+    .mask[data-mode="page"] .visual {
+      justify-self: start;
+      width: 72px;
+      height: 72px;
+      border: 1px solid color-mix(in oklch, var(--accent) 20%, var(--line));
+      border-radius: 22px;
+      background: color-mix(in oklch, var(--accent) 10%, var(--surface));
+      overflow: visible;
+    }
+
+    .mask[data-mode="page"] .visual svg {
+      width: 80px;
+      height: 54px;
+      transform: none;
+    }
+
+    .mask[data-mode="page"] .visual svg > path:first-child,
+    .mask[data-mode="page"] .visual svg > path:last-child {
+      display: none;
+    }
+
+    .visual [data-accent] {
+      fill: var(--accent);
+    }
+
+    .visual [data-stroke] {
+      fill: none;
+      stroke: var(--ink);
+      stroke-width: 2.6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_init"][data-demo-state="done"] .visual,
+    .mask[data-mode="page"] .sheet[data-node="account_approved"][data-demo-state="done"] .visual {
+      border-color: color-mix(in oklch, var(--success) 24%, var(--line));
+      background: color-mix(in oklch, var(--success-bg) 70%, var(--surface));
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_init"][data-demo-state="done"] .visual [data-accent],
+    .mask[data-mode="page"] .sheet[data-node="account_approved"][data-demo-state="done"] .visual [data-accent] {
+      fill: color-mix(in oklch, var(--success) 32%, var(--accent));
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_reviewing"][data-demo-state="pending"] .visual,
+    .mask[data-mode="page"] .sheet[data-node="account_approved"][data-demo-state="pending"] .visual {
+      border-color: color-mix(in oklch, var(--warning) 26%, var(--line));
+      background: color-mix(in oklch, var(--warning-bg) 72%, var(--surface));
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_reviewing"][data-demo-state="pending"] .visual [data-accent],
+    .mask[data-mode="page"] .sheet[data-node="account_approved"][data-demo-state="pending"] .visual [data-accent] {
+      fill: color-mix(in oklch, var(--warning) 34%, var(--accent));
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_reviewing"][data-demo-state="done"] .visual {
+      border-color: color-mix(in oklch, var(--info) 22%, var(--line));
+      background: color-mix(in oklch, var(--info-bg) 78%, var(--surface));
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_reviewing"][data-demo-state="done"] .visual [data-accent] {
+      fill: color-mix(in oklch, var(--info) 28%, var(--accent));
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_reviewing"] .visual {
+      border-color: color-mix(in oklch, var(--airbnb-rausch) 22%, var(--airbnb-line));
+      border-radius: 20px;
+      background: color-mix(in oklch, var(--airbnb-rose-soft) 78%, var(--surface));
+      box-shadow: 0 10px 24px rgba(34, 34, 34, .06);
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_reviewing"] .visual [data-accent] {
+      fill: color-mix(in oklch, var(--airbnb-rausch) 36%, var(--success));
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_failed"] .visual {
+      border-color: color-mix(in oklch, var(--danger) 24%, var(--line));
+      background: color-mix(in oklch, var(--error-bg) 72%, var(--surface));
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_failed"] .visual [data-accent] {
+      fill: color-mix(in oklch, var(--danger) 32%, var(--accent));
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="video_reviewing"] .visual,
+    .mask[data-mode="page"] .sheet[data-node="video_application_waiting"] .visual {
+      border-color: color-mix(in oklch, var(--info) 22%, var(--line));
+      background: color-mix(in oklch, var(--info-bg) 78%, var(--surface));
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="video_reviewing"] .visual [data-accent],
+    .mask[data-mode="page"] .sheet[data-node="video_application_waiting"] .visual [data-accent] {
+      fill: color-mix(in oklch, var(--info) 28%, var(--accent));
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="video_completed"] .visual {
+      border-color: color-mix(in oklch, var(--success) 24%, var(--line));
+      background: color-mix(in oklch, var(--success-bg) 72%, var(--surface));
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="video_completed"] .visual [data-accent] {
+      fill: color-mix(in oklch, var(--success) 34%, var(--accent));
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="video_failed"] .visual {
+      border-color: color-mix(in oklch, var(--danger) 24%, var(--line));
+      background: color-mix(in oklch, var(--error-bg) 72%, var(--surface));
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="video_failed"] .visual [data-accent] {
+      fill: color-mix(in oklch, var(--danger) 32%, var(--accent));
+    }
+
+    .copy {
+      width: 100%;
+      display: grid;
+      gap: 8px;
+      text-align: center;
+    }
+
+    .mask[data-mode="page"] .copy {
+      gap: 10px;
+      text-align: left;
+    }
+
+    .copy h1 {
+      margin: 0;
+      color: var(--ink);
+      font-size: 24px;
+      line-height: 1.16;
+      font-weight: 720;
+    }
+
+    .mask[data-mode="page"] .copy h1 {
+      font-size: 27px;
+      line-height: 1.14;
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_reviewing"] .copy h1 {
+      color: var(--airbnb-ink);
+      font-size: 26px;
+      line-height: 1.18;
+      font-weight: 720;
+    }
+
+    .copy p {
+      margin: 0 auto;
+      max-width: 330px;
+      color: var(--ink);
+      font-size: 16px;
+      line-height: 19.2px;
+      font-weight: 400;
+    }
+
+    .mask[data-mode="page"] .copy p {
+      margin: 0;
+      max-width: none;
+      color: var(--sub);
+      line-height: 1.45;
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_reviewing"] .copy p {
+      color: var(--airbnb-body);
+      font-size: 16px;
+      line-height: 1.42;
+      font-weight: 430;
+    }
+
+    .reason-note {
+      width: min(330px, 100%);
+      margin: 4px auto 0;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--info-bg);
+      color: var(--info);
+      font-size: 13px;
+      line-height: 1.42;
+      font-weight: 520;
+      text-align: left;
+    }
+
+    .mask[data-mode="page"] .reason-note,
+    .mask[data-mode="page"] .tips-card,
+    .mask[data-mode="page"] .info-card,
+    .mask[data-mode="page"] .account-card {
+      width: 100%;
+    }
+
+    .mask[data-mode="page"] .reason-note {
+      margin-top: 2px;
+      padding: 10px 13px;
+      border-radius: 14px;
+      line-height: 1.45;
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_reviewing"] .reason-note {
+      border-color: color-mix(in oklch, var(--airbnb-rausch) 20%, var(--airbnb-line));
+      border-radius: 16px;
+      background: color-mix(in oklch, var(--airbnb-rose-soft) 82%, var(--surface));
+      color: color-mix(in oklch, var(--airbnb-rausch-active) 76%, var(--airbnb-ink));
+      font-weight: 650;
+    }
+
+    .reason-note[data-level="warning"] {
+      border-color: color-mix(in oklch, var(--warning) 24%, var(--line));
+      background: var(--warning-bg);
+      color: var(--warning);
+    }
+
+    .reason-note[data-level="error"] {
+      border-color: color-mix(in oklch, var(--danger) 24%, var(--line));
+      background: var(--error-bg);
+      color: var(--danger);
+    }
+
+    .reason-note[hidden] {
+      display: none;
+    }
+
+    .tips-card {
+      width: min(330px, 100%);
+      margin: 6px auto 0;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: var(--surface);
+      display: grid;
+      gap: 9px;
+      text-align: left;
+    }
+
+    .tips-card[hidden] {
+      display: none;
+    }
+
+    .tips-card ul {
+      display: grid;
+      gap: 7px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .tips-card li {
+      position: relative;
+      padding-left: 18px;
+      color: var(--ink);
+      font-size: 13px;
+      line-height: 1.38;
+      font-weight: 540;
+    }
+
+    .tips-card li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: .56em;
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 2px color-mix(in oklch, var(--accent) 22%, transparent);
+    }
+
+    .tips-card button {
+      width: max-content;
+      border: 0;
+      padding: 0;
+      background: transparent;
+      color: var(--info);
+      font-size: 13px;
+      font-weight: 680;
+      text-align: left;
+    }
+
+    .info-card {
+      width: min(330px, 100%);
+      margin: 6px auto 0;
+      display: grid;
+      gap: 10px;
+      text-align: left;
+    }
+
+    .info-card[hidden] {
+      display: none;
+    }
+
+    .info-item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: var(--surface);
+      display: grid;
+      gap: 7px;
+    }
+
+    .mask[data-mode="page"] .info-card {
+      gap: 10px;
+    }
+
+    .mask[data-mode="page"] .info-item {
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .info-item strong {
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.3;
+      font-weight: 720;
+    }
+
+    .info-item span {
+      color: var(--sub);
+      font-size: 12px;
+      line-height: 1.42;
+      font-weight: 520;
+    }
+
+    .info-item ul {
+      display: grid;
+      gap: 6px;
+      margin: 2px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .info-item li {
+      position: relative;
+      padding-left: 18px;
+      color: var(--sub);
+      font-size: 12px;
+      line-height: 1.38;
+      font-weight: 540;
+    }
+
+    .info-item li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: var(--success);
+      font-weight: 820;
+    }
+
+    .info-item[data-kind="summary"] {
+      border-color: color-mix(in oklch, var(--action) 38%, var(--line));
+      background: color-mix(in oklch, var(--action) 12%, var(--surface));
+    }
+
+    .info-item[data-kind="summary"] strong {
+      font-size: 15px;
+    }
+
+    .info-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .info-tag {
+      min-height: 24px;
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid color-mix(in oklch, var(--action) 26%, var(--line));
+      border-radius: 999px;
+      padding: 4px 8px;
+      background: color-mix(in oklch, var(--surface) 72%, transparent);
+      color: var(--action-ink);
+      font-size: 11px;
+      line-height: 1;
+      font-weight: 720;
+    }
+
+    .status-steps {
+      display: grid;
+      margin-top: 2px;
+    }
+
+    .status-step {
+      position: relative;
+      min-height: 31px;
+      display: grid;
+      grid-template-columns: 22px minmax(0, 1fr);
+      gap: 8px;
+      padding-bottom: 6px;
+    }
+
+    .status-step:last-child {
+      min-height: 22px;
+      padding-bottom: 0;
+    }
+
+    .status-step::after {
+      content: "";
+      position: absolute;
+      left: 8px;
+      top: 19px;
+      bottom: 0;
+      width: 1px;
+      background: color-mix(in oklch, var(--line) 88%, transparent);
+    }
+
+    .status-step:last-child::after {
+      display: none;
+    }
+
+    .status-dot {
+      position: relative;
+      z-index: 1;
+      width: 17px;
+      height: 17px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--surface);
+      font-size: 11px;
+      line-height: 1;
+      font-weight: 820;
+    }
+
+    .status-step[data-state="done"] .status-dot {
+      border-color: color-mix(in oklch, var(--success) 72%, var(--line));
+      background: var(--success);
+    }
+
+    .status-step[data-state="done"] .status-dot::before {
+      content: "✓";
+    }
+
+    .status-step[data-state="current"] .status-dot {
+      border-color: color-mix(in oklch, var(--action) 72%, var(--line));
+      background: var(--action);
+      box-shadow: 0 0 0 4px color-mix(in oklch, var(--action) 18%, transparent);
+    }
+
+    .status-step[data-state="pending"] .status-dot {
+      background: var(--surface);
+    }
+
+    .status-step-content {
+      display: grid;
+      gap: 2px;
+      transform: translateY(-1px);
+    }
+
+    .status-step-content b {
+      color: var(--ink);
+      font-size: 13px;
+      line-height: 1.25;
+      font-weight: 720;
+    }
+
+    .status-step-content small {
+      color: var(--sub);
+      font-size: 12px;
+      line-height: 1.35;
+      font-weight: 520;
+    }
+
+    .info-item[data-kind="status"] {
+      border-color: color-mix(in oklch, var(--action) 30%, var(--line));
+      background: color-mix(in oklch, var(--action) 7%, var(--surface));
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_reviewing"] .info-item {
+      border-color: var(--airbnb-line);
+      border-radius: 18px;
+      background: var(--surface);
+      box-shadow: 0 1px 0 rgba(34, 34, 34, .04);
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_reviewing"] .info-item strong {
+      color: var(--airbnb-ink);
+      font-weight: 680;
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_reviewing"] .info-item span,
+    .mask[data-mode="page"] .sheet[data-node="account_reviewing"] .status-step-content small {
+      color: var(--airbnb-muted);
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_reviewing"] .info-item[data-kind="status"] {
+      border-color: color-mix(in oklch, var(--airbnb-rausch) 18%, var(--airbnb-line));
+      background:
+        linear-gradient(180deg, color-mix(in oklch, var(--airbnb-rose-soft) 56%, var(--surface)), var(--surface) 64%);
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_reviewing"] .info-item[data-kind="action"] {
+      border-color: color-mix(in oklch, var(--success) 18%, var(--airbnb-line));
+      background: color-mix(in oklch, var(--success-bg) 55%, var(--surface));
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_reviewing"] .status-step::after {
+      background: var(--airbnb-line);
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_reviewing"] .status-step[data-state="done"] .status-dot {
+      border-color: color-mix(in oklch, var(--success) 62%, var(--airbnb-line));
+      background: var(--success);
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_reviewing"] .status-step[data-state="current"] .status-dot {
+      border-color: color-mix(in oklch, var(--airbnb-rausch) 72%, var(--airbnb-line));
+      background: var(--airbnb-rausch);
+      box-shadow: 0 0 0 5px color-mix(in oklch, var(--airbnb-rausch) 14%, transparent);
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_reviewing"] .status-step[data-state="pending"] .status-dot {
+      border-color: var(--airbnb-line);
+      background: var(--surface);
+    }
+
+    .info-item[data-kind="confirm"] li {
+      color: var(--ink);
+    }
+
+    .info-item[data-kind="prepare"] ul {
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+    }
+
+    .info-item[data-kind="prepare"] li {
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+      border-radius: 10px;
+      padding: 8px 8px 8px 24px;
+      background: var(--soft);
+      color: var(--ink);
+    }
+
+    .info-item[data-kind="prepare"] li::before {
+      top: 50%;
+      left: 8px;
+      transform: translateY(-50%);
+    }
+
+    .info-item[data-kind="impact"] {
+      border-color: color-mix(in oklch, var(--warning) 24%, var(--line));
+      background: color-mix(in oklch, var(--warning-bg) 64%, var(--surface));
+    }
+
+    .info-item[data-kind="action"] {
+      border-color: color-mix(in oklch, var(--action) 30%, var(--line));
+      background: color-mix(in oklch, var(--action) 9%, var(--surface));
+    }
+
+    .info-item[data-kind="action"] li {
+      color: var(--ink);
+    }
+
+    .info-item[data-kind="review"] {
+      border-color: color-mix(in oklch, var(--info) 20%, var(--line));
+      background: color-mix(in oklch, var(--info-bg) 68%, var(--surface));
+    }
+
+    .info-item[data-kind="fix"] {
+      border-color: color-mix(in oklch, var(--danger) 20%, var(--line));
+      background: color-mix(in oklch, var(--error-bg) 58%, var(--surface));
+    }
+
+    .info-item[data-kind="fix"] li::before {
+      color: var(--danger);
+    }
+
+    .info-item[data-kind="privacy"] {
+      background: var(--soft);
+    }
+
+    .info-item[data-kind="privacy"] strong {
+      font-size: 13px;
+    }
+
+    .account-card {
+      width: min(330px, 100%);
+      margin: 10px auto 0;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      background: var(--surface);
+      display: grid;
+      gap: 13px;
+      text-align: left;
+    }
+
+    .mask[data-mode="page"] .account-card {
+      margin-top: 2px;
+      padding: 15px;
+      border-radius: 18px;
+      box-shadow: 0 14px 28px rgba(24, 31, 42, .07);
+    }
+
+    .account-card[hidden] {
+      display: none;
+    }
+
+    .account-card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .account-title {
+      min-width: 0;
+      display: grid;
+      gap: 5px;
+    }
+
+    .account-card span,
+    .account-detail span {
+      color: var(--sub);
+      font-size: 12px;
+      line-height: 1.25;
+      font-weight: 560;
+    }
+
+    .account-number {
+      color: var(--ink);
+      font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+      font-size: 24px;
+      line-height: 1.2;
+      font-weight: 780;
+      letter-spacing: -.02em;
+    }
+
+    .account-card em {
+      align-self: start;
+      border-radius: 999px;
+      padding: 5px 9px;
+      background: color-mix(in oklch, var(--success) 10%, var(--surface));
+      color: var(--success);
+      font-size: 11px;
+      line-height: 1;
+      font-style: normal;
+      font-weight: 720;
+      white-space: nowrap;
+    }
+
+    .account-balance {
+      border-radius: 14px;
+      padding: 12px;
+      background: color-mix(in oklch, var(--action) 10%, var(--surface));
+      display: grid;
+      gap: 4px;
+    }
+
+    .mask[data-mode="page"] .account-balance {
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+      gap: 10px;
+    }
+
+    .account-balance span {
+      color: var(--sub);
+      font-size: 12px;
+      line-height: 1.25;
+      font-weight: 620;
+    }
+
+    .account-balance strong {
+      color: var(--ink);
+      font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+      font-size: 22px;
+      line-height: 1.12;
+      font-weight: 780;
+      letter-spacing: -.02em;
+      white-space: nowrap;
+    }
+
+    .account-details {
+      border-top: 1px solid var(--line);
+      padding-top: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 14px;
+    }
+
+    .account-detail {
+      min-width: 0;
+      display: grid;
+      gap: 3px;
+    }
+
+    .account-detail strong {
+      color: var(--ink);
+      font-size: 13px;
+      line-height: 1.25;
+      font-weight: 720;
+      overflow-wrap: anywhere;
+    }
+
+    .account-card small {
+      border-top: 1px solid var(--line);
+      padding-top: 11px;
+      color: var(--sub);
+      font-size: 12px;
+      line-height: 1.35;
+      font-weight: 520;
+    }
+
+    .sheet-actions {
+      width: 100%;
+      flex: 0 0 auto;
+      padding: 16px 16px 0;
+      display: grid;
+      gap: 10px;
+    }
+
+    .mask[data-mode="page"] .sheet-actions {
+      border-top: 1px solid var(--line);
+      padding: 14px 20px 0;
+      background: var(--phone);
+      box-shadow: 0 -12px 24px rgba(24, 31, 42, .06);
+    }
+
+    .mask[data-mode="page"] .primary,
+    .mask[data-mode="page"] .secondary {
+      min-height: 50px;
+    }
+
+    .primary,
+    .secondary {
+      width: 100%;
+      min-height: 48px;
+      border-radius: 12px;
+      line-height: 1;
+      font-weight: 610;
+    }
+
+    .primary {
+      border: 0;
+      background: var(--action);
+      color: var(--action-ink);
+      font-size: 18px;
+      transition: transform .18s cubic-bezier(.2, .8, .2, 1), background .18s cubic-bezier(.2, .8, .2, 1);
+    }
+
+    .secondary {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--ink);
+      font-size: 15px;
+    }
+
+    .primary:hover {
+      transform: scale(1.015);
+    }
+
+    .primary:active {
+      transform: scale(.985);
+    }
+
+    .primary:focus-visible,
+    .secondary:focus-visible,
+    .page-nav button:focus-visible,
+    .switch button:focus-visible,
+    .node-grid button:focus-visible,
+    .tips-card button:focus-visible,
+    .field select:focus-visible {
+      outline: 3px solid color-mix(in oklch, var(--action) 45%, transparent);
+      outline-offset: 2px;
+    }
+
+    .secondary[hidden] {
+      display: none;
+    }
+
+    .primary span {
+      display: inline-block;
+      margin-left: 8px;
+      transform: translateY(-1px);
+    }
+
+    .home-indicator {
+      height: 34px;
+      flex: 0 0 auto;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 10px;
+    }
+
+    .home-indicator::before {
+      content: "";
+      width: 134px;
+      height: 5px;
+      border-radius: 100px;
+      background: var(--ink);
+    }
+
+    .mask[data-mode="page"] .home-indicator {
+      background: var(--phone);
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_reviewing"] .sheet-actions,
+    .mask[data-mode="page"] .sheet[data-node="account_reviewing"] .home-indicator {
+      background: color-mix(in oklch, var(--surface) 82%, var(--airbnb-soft));
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_reviewing"] .primary {
+      border-radius: 14px;
+      background: var(--airbnb-rausch);
+      color: oklch(99% 0.004 70);
+      font-size: 17px;
+      font-weight: 680;
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_reviewing"][data-demo-state="done"] .primary {
+      background: var(--airbnb-ink);
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_reviewing"] .primary:hover {
+      background: var(--airbnb-rausch-active);
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_reviewing"][data-demo-state="done"] .primary:hover {
+      background: color-mix(in oklch, var(--airbnb-ink) 86%, var(--airbnb-rausch));
+    }
+
+    .mask[data-mode="page"] .sheet[data-node="account_reviewing"] .secondary {
+      border-color: var(--airbnb-line);
+      border-radius: 14px;
+      background: var(--surface);
+      color: var(--airbnb-ink);
+    }
+
+    .control-panel {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      z-index: 10;
+      width: min(348px, calc(100vw - 44px));
+      max-height: calc(100vh - 44px);
+      overflow: auto;
+      border: 1px solid color-mix(in oklch, var(--line) 84%, transparent);
+      border-radius: var(--radius-control);
+      padding: 14px;
+      background: color-mix(in oklch, var(--surface) 96%, transparent);
+      box-shadow: 0 18px 54px rgba(24, 31, 42, .18);
+      backdrop-filter: blur(18px);
+    }
+
+    .control-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .control-head strong {
+      font-size: 14px;
+      font-weight: 780;
+    }
+
+    .control-head span {
+      color: var(--sub);
+      font-size: 11px;
+      font-weight: 650;
+      text-align: right;
+    }
+
+    .control-stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .control-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, .9fr);
+      gap: 8px;
+    }
+
+    .control-section {
+      display: grid;
+      gap: 7px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field[hidden],
+    .control-section[hidden] {
+      display: none;
+    }
+
+    .section-label,
+    .field label {
+      color: var(--sub);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .field select {
+      width: 100%;
+      height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 9px;
+      background: var(--surface);
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 620;
+    }
+
+    .switch {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 3px;
+      background: var(--surface);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3px;
+    }
+
+    .switch button {
+      min-height: 32px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--sub);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .switch button.active {
+      background: var(--ink);
+      color: var(--surface);
+    }
+
+    .node-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+    }
+
+    .node-grid button {
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .node-grid button.active {
+      border-color: var(--ink);
+      background: var(--ink);
+      color: var(--surface);
+    }
+
+    @media (max-width: 900px) {
+      .stage {
+        padding: 12px 10px 214px;
+      }
+
+      .phone {
+        height: min(844px, calc(100vh - 226px));
+        min-height: 610px;
+        border-radius: 24px;
+      }
+
+      .control-panel {
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        width: auto;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .stage {
+        padding: 0 0 214px;
+      }
+
+      .phone {
+        width: 100vw;
+        height: calc(100vh - 214px);
+        min-height: 590px;
+        border-radius: 0;
+        box-shadow: none;
+      }
+
+      .copy h1 {
+        font-size: 23px;
+      }
+
+      .mask[data-mode="page"] .sheet-content {
+        padding: 24px 18px 20px;
+        gap: 16px;
+      }
+
+      .mask[data-mode="page"] .account-balance {
+        grid-template-columns: 1fr;
+        align-items: start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="stage">
+    <section class="phone" aria-label="App account opening guide preview">
+      <div class="app-hint">
+        <span>9:41</span>
+        <span>5G 100%</span>
+      </div>
+      <div class="mask">
+        <section class="sheet" aria-label="Open account bottom sheet" aria-live="polite">
+          <div class="sheet-top"><div class="handle"></div></div>
+          <div class="page-nav" id="pageNav" hidden>
+            <button type="button" id="pageBack" aria-label="Back">‹</button>
+            <span id="pageNavTitle"></span>
+            <span aria-hidden="true"></span>
+          </div>
+          <div class="sheet-content">
+            <div class="visual" id="visual" aria-hidden="true"></div>
+            <div class="copy">
+              <h1 id="sheetTitle"></h1>
+              <p id="sheetDesc"></p>
+              <div class="reason-note" id="failureReason" hidden></div>
+              <div class="tips-card" id="tipsCard" hidden></div>
+              <div class="info-card" id="infoCard" hidden></div>
+              <div class="account-card" id="accountCard" hidden></div>
+            </div>
+          </div>
+          <div class="sheet-actions">
+            <button class="primary" type="button" id="primaryAction"></button>
+            <button class="secondary" type="button" id="secondaryAction" hidden></button>
+          </div>
+          <div class="home-indicator"></div>
+        </section>
+      </div>
+    </section>
+
+    <aside class="control-panel" aria-label="Prototype controls">
+      <div class="control-head">
+        <strong id="panelTitle"></strong>
+        <span id="panelSummary"></span>
+      </div>
+      <div class="control-stack">
+        <div class="control-row">
+          <div class="field">
+            <label id="flowLabel"></label>
+            <div class="switch" id="flowSwitch"></div>
+          </div>
+          <div class="field">
+            <label id="langLabel"></label>
+            <div class="switch" id="langSwitch">
+              <button type="button" data-lang="zh">中文</button>
+              <button type="button" data-lang="en">EN</button>
+            </div>
+          </div>
+        </div>
+        <div class="field" id="demoField">
+          <label id="demoLabel"></label>
+          <div class="switch" id="demoSwitch">
+            <button type="button" data-demo="false"></button>
+            <button type="button" data-demo="true"></button>
+          </div>
+        </div>
+        <div class="field" id="triggerSceneField">
+          <label for="triggerSceneSelect" id="triggerSceneLabel"></label>
+          <select id="triggerSceneSelect"></select>
+        </div>
+        <div class="control-section">
+          <div class="section-label" id="nodeLabel"></div>
+          <div class="node-grid" id="nodeButtons"></div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    const state = {
+      flowType: "account",
+      node: "account_init",
+      accountScene: "globalEntry",
+      returnNode: "video_init",
+      triggerScene: "general",
+      demoDone: false,
+      lang: "zh"
+    };
+
+    const labels = {
+      zh: {
+        panelTitle: "功能面板",
+        flowLabel: "流程类型",
+        nodeLabel: "反馈节点",
+        triggerSceneLabel: "触发场景",
+        accountSceneLabel: "开户引导场景",
+        videoSceneLabel: "视频触发场景",
+        demoLabel: "Demo 交易",
+        langLabel: "语言",
+        accountPageTitle: "开户反馈",
+        videoPageTitle: "视频认证反馈",
+        yes: "已完成",
+        no: "未完成",
+        panelSuffix: "底部弹框"
+      },
+      en: {
+        panelTitle: "Control Panel",
+        flowLabel: "Flow Type",
+        nodeLabel: "Feedback Node",
+        triggerSceneLabel: "Trigger Scene",
+        accountSceneLabel: "Account Guide Scene",
+        videoSceneLabel: "Video Trigger Scene",
+        demoLabel: "Demo Trade",
+        langLabel: "Language",
+        accountPageTitle: "Account Opening",
+        videoPageTitle: "Video Verification",
+        yes: "Done",
+        no: "Not done",
+        panelSuffix: "Bottom sheet"
+      }
+    };
+
+    const flows = {
+      account: {
+        label: { zh: "开户流程", en: "Account Opening" },
+        nodes: [
+          "account_init",
+          "account_interrupted",
+          "account_agreement_exit",
+          "account_reviewing",
+          "account_approved",
+          "account_failed"
+        ]
+      },
+      video: {
+        label: { zh: "视频认证", en: "Video Verification" },
+        nodes: [
+          "video_init",
+          "video_help",
+          "video_required",
+          "video_reviewing",
+          "video_application_waiting",
+          "video_completed",
+          "video_failed"
+        ]
+      }
+    };
+
+    function currentFlow() {
+      return flows[state.flowType];
+    }
+
+    function normalizeNode() {
+      if (!currentFlow().nodes.includes(state.node)) {
+        state.node = currentFlow().nodes[0];
+      }
+    }
+
+    function text(zh, en) {
+      return { zh, en };
+    }
+
+    function nodeNameMap() {
+      return {
+        account_init: text("初始化", "Start"),
+        account_interrupted: text("开户中断", "Interrupted"),
+        account_agreement_exit: text("退出协议签署", "Exit Agreement"),
+        account_reviewing: text("开户审核中", "Application Review"),
+        account_approved: text("开户成功", "Approved"),
+        account_failed: text("开户失败", "Application Not Approved"),
+        video_init: text("初始化", "Start"),
+        video_help: text("为什么需要认证", "Why Required"),
+        video_required: text("需要视频认证", "Verification Required"),
+        video_reviewing: text("视频审核中", "Video Review"),
+        video_application_waiting: text("开户等待认证", "Application Waiting"),
+        video_completed: text("视频认证通过", "Verification Completed"),
+        video_failed: text("视频认证失败", "Video Verification Failed")
+      };
+    }
+
+    const sceneAwareVideoNodes = new Set([
+      "video_required",
+      "video_reviewing",
+      "video_completed"
+    ]);
+
+    const videoPageNodes = new Set([
+      "video_reviewing",
+      "video_application_waiting",
+      "video_completed",
+      "video_failed"
+    ]);
+
+    const accountGuideScenes = {
+      globalEntry: {
+        label: text("进入 App 全局弹框", "App Entry Pop-up"),
+        pending: {
+          title: text("开通真实交易账号", "Open a Live Trading Account"),
+          desc: text("提交开户资料后，您可在审核期间完成 Demo 交易。审核通过并完成 Demo 后，我们将为您开通真实交易账号。", "After submitting your application, you can complete demo trading during the review. Once approved and demo trading is completed, we’ll open your live trading account."),
+          error: text("首页和我的页会保留开户入口，您也可以稍后继续。", "The Home and Me pages will keep the account opening entry, so you can continue later."),
+          primary: text("立即开户", "Start Application"),
+          secondary: text("稍后处理", "Do It Later")
+        },
+        demoDone: {
+          title: text("Demo 已完成，继续开户", "Demo Completed, Continue Application"),
+          desc: text("您已完成开户所需的 Demo 交易。现在提交开户资料，审核通过后即可开通真实交易账号。", "You’ve completed the demo trading required for account opening. Submit your application now, and your live trading account can be opened once approved."),
+          error: text("已完成的 Demo 交易会用于本次开户要求，无需重复完成。", "The completed demo trading will count toward this application. You don’t need to repeat it."),
+          primary: text("继续开户", "Continue Application"),
+          secondary: text("稍后处理", "Do It Later")
+        }
+      },
+      homeModule: {
+        label: text("首页固定模块", "Home Fixed Module"),
+        pending: {
+          title: text("完成开户，解锁真实交易", "Open an Account to Trade Live"),
+          desc: text("开设真实交易账号需要完成开户资料和 Demo 交易。您可以先提交开户资料，再按提示完成 Demo。", "Opening a live trading account requires application information and demo trading. You can submit your application first, then complete demo trading as prompted."),
+          error: text("您可以稍后从首页入口继续开户。", "You can continue account opening later from the Home entry."),
+          primary: text("去开户", "Open Account"),
+          secondary: text("稍后再说", "Maybe Later")
+        },
+        demoDone: {
+          title: text("Demo 已完成，去开户", "Demo Completed, Open Account"),
+          desc: text("您已完成 Demo 交易。只需继续提交开户资料，审核通过后即可获得真实交易账号。", "You’ve completed demo trading. Continue by submitting your application, and you can receive a live trading account once approved."),
+          error: text("已完成的 Demo 交易会保留，无需再次完成。", "Your completed demo trading is saved. You don’t need to complete it again."),
+          primary: text("去开户", "Open Account"),
+          secondary: text("稍后再说", "Maybe Later")
+        }
+      },
+      profileModule: {
+        label: text("我的页固定模块", "Me Page Fixed Module"),
+        pending: {
+          title: text("完善开户后使用完整账户功能", "Open an Account for Full Features"),
+          desc: text("完成开户资料和 Demo 交易后，您可以获得真实交易账号，并继续使用存款、取款等账户功能。", "After completing application information and demo trading, you can receive a live trading account and continue using account features such as deposits and withdrawals."),
+          error: text("您也可以稍后在我的页继续查看开户状态。", "You can also return to the Me page later to check your application status."),
+          primary: text("继续开户", "Continue Application"),
+          secondary: text("暂不开户", "Not Now")
+        },
+        demoDone: {
+          title: text("Demo 已完成，补充开户资料", "Demo Completed, Submit Application"),
+          desc: text("开户所需的 Demo 交易已完成。请继续提交身份信息、个人资料、交易设置和协议签署。", "The required demo trading is complete. Continue with identity information, personal details, trading setup, and agreements."),
+          error: text("审核通过后，我们将继续为您开通真实交易账号。", "Once approved, we’ll continue opening your live trading account."),
+          primary: text("补充开户资料", "Submit Application"),
+          secondary: text("暂不开户", "Not Now")
+        }
+      }
+    };
+
+    const videoScenes = {
+      general: {
+        label: text("通用/兜底", "General / Fallback"),
+        required: {
+          title: text("需要完成视频认证", "Video Verification Required"),
+          desc: text("为继续当前操作，请先完成视频认证。认证通过后，您可以回到刚才的操作继续处理。", "To continue your current action, please complete video verification first. Once approved, you can return to the action you started."),
+          error: text("认证通过前，相关操作可能暂时无法继续。", "The related action may be temporarily unavailable until verification is approved."),
+          primary: text("开始视频认证", "Start Video Verification"),
+          secondary: text("稍后处理", "Do It Later")
+        },
+        reviewing: {
+          title: text("视频认证审核中", "Video Verification Under Review"),
+          desc: text("您的视频认证已提交。审核完成后，我们会通知您结果，您可以继续刚才的操作。", "Your video verification has been submitted. We’ll notify you once the review is complete, and you can continue your previous action."),
+          primary: text("查看认证状态", "View Verification Status")
+        },
+        completed: {
+          title: text("视频认证已通过", "Video Verification Completed"),
+          desc: text("您的视频认证已通过。暂未识别到发起认证的具体操作，请返回相关页面查看是否需要继续处理。", "Your video verification has been approved. We couldn’t identify the action that started this verification. Please return to the related page to check whether anything needs to continue."),
+          error: text("如您此前有待处理的存款、取款或新增交易账号操作，请在对应记录或账户页面查看最新状态。", "If you had a pending deposit, withdrawal, or new trading account action, check the related record or account page for the latest status."),
+          primary: text("返回首页", "Back to Home"),
+          secondary: text("查看账户功能", "View Account Features")
+        }
+      },
+      addAccount: {
+        label: text("创建第 2 个交易账号", "Create Second Trading Account"),
+        required: {
+          title: text("添加账户前需要认证", "Verification Required Before Adding Account"),
+          desc: text("创建第 2 个交易账号前，请先完成视频认证。认证通过后，您可以继续创建新的交易账号。", "Before creating a second trading account, please complete video verification. Once approved, you can continue creating the new trading account."),
+          error: text("视频认证通过前，暂时无法创建新的交易账号。", "You can’t create another trading account until video verification is approved."),
+          primary: text("开始认证", "Start Verification"),
+          secondary: text("稍后处理", "Do It Later")
+        },
+        reviewing: {
+          title: text("视频认证审核中", "Video Verification Under Review"),
+          desc: text("您的视频认证已提交。认证通过后，您可以继续创建第 2 个交易账号。", "Your video verification has been submitted. Once approved, you can continue creating the second trading account."),
+          primary: text("查看认证状态", "View Verification Status")
+        },
+        completed: {
+          title: text("可以继续创建交易账号", "Continue Creating Trading Account"),
+          desc: text("您的视频认证已通过。现在可以继续创建第 2 个交易账号。", "Your video verification has been approved. You can now continue creating the second trading account."),
+          primary: text("继续创建账号", "Continue Creating Account")
+        }
+      },
+      deposit: {
+        label: text("存款入账到交易账号", "Deposit to Trading Account"),
+        required: {
+          title: text("需要完成视频认证", "Video Verification Required"),
+          desc: text("您可以先提交本次存款。视频认证通过前，资金会保持待处理状态，暂不会进入交易账号。", "You can submit this deposit now. Until video verification is approved, the funds will remain pending and will not be credited to the trading account."),
+          error: text("认证通过后，系统会继续执行这笔存款，并将资金入账到您的交易账号。", "Once verification is approved, the system will continue this deposit and credit the funds to your trading account."),
+          primary: text("开始视频认证", "Start Video Verification"),
+          secondary: text("查看存款记录", "View Deposit Record")
+        },
+        reviewing: {
+          title: text("视频认证审核中", "Video Verification Under Review"),
+          desc: text("您的视频认证已提交。本次存款会保持待处理状态，认证通过后系统将继续入账到您的交易账号。", "Your video verification has been submitted. This deposit will remain pending, and once verification is approved, the system will continue crediting it to your trading account."),
+          primary: text("查看存款记录", "View Deposit Record")
+        },
+        completed: {
+          title: text("存款将继续处理", "Deposit Will Continue"),
+          desc: text("您的视频认证已通过。系统将继续执行这笔存款，并把资金入账到您的交易账号。", "Your video verification has been approved. The system will continue this deposit and credit the funds to your trading account."),
+          primary: text("查看存款记录", "View Deposit Record")
+        }
+      },
+      balance: {
+        label: text("恢复完整账户功能", "Restore Account Features"),
+        required: {
+          title: text("需要补充认证", "Additional Verification Required"),
+          desc: text("您的账户已达到认证限制。请完成视频认证，以继续使用完整账户功能。", "Your account has reached a verification limit. Please complete video verification to continue using all account features."),
+          error: text("在认证通过前，部分账户功能可能暂时不可用。", "Some account features may be temporarily unavailable until verification is approved."),
+          primary: text("完成认证", "Complete Verification"),
+          secondary: text("了解更多", "Learn More")
+        },
+        completed: {
+          title: text("账户功能已恢复", "Account Features Restored"),
+          desc: text("您的视频认证已通过。现在可以继续使用完整账户功能。", "Your video verification has been approved. You can now continue using all account features."),
+          primary: text("继续使用账户", "Continue")
+        }
+      },
+      withdrawal: {
+        label: text("提交取款", "Submit Withdrawal"),
+        required: {
+          title: text("取款前需要认证", "Verification Required Before Withdrawal"),
+          desc: text("提交取款申请前，请先完成视频认证。认证通过后，您可以继续本次取款。", "Before submitting a withdrawal request, please complete video verification. Once approved, you can continue this withdrawal."),
+          error: text("视频认证通过前，暂时无法提交取款申请。", "Withdrawal requests are temporarily unavailable until video verification is approved."),
+          primary: text("立即认证", "Verify Now"),
+          secondary: text("返回", "Back")
+        },
+        reviewing: {
+          title: text("视频认证审核中", "Video Verification Under Review"),
+          desc: text("您的视频认证已提交。认证通过后，您可以继续提交本次取款申请。", "Your video verification has been submitted. Once approved, you can continue submitting this withdrawal request."),
+          primary: text("查看认证状态", "View Verification Status")
+        },
+        completed: {
+          title: text("可以继续取款", "Continue Withdrawal"),
+          desc: text("您的视频认证已通过。现在可以继续提交本次取款申请。", "Your video verification has been approved. You can now continue submitting this withdrawal request."),
+          primary: text("继续取款", "Continue Withdrawal")
+        }
+      },
+      application: {
+        label: text("继续开户流程", "Continue Application"),
+        required: {
+          title: text("开户前需要完成视频认证", "Video Verification Required"),
+          desc: text("为继续处理开户流程，请先完成视频认证。认证通过后，开户流程将继续处理。", "To continue your account application, please complete video verification first. Once approved, your application will continue."),
+          error: text("视频认证通过前，开户流程可能暂时无法继续。", "Your account application may be temporarily paused until video verification is approved."),
+          primary: text("开始视频认证", "Start Video Verification"),
+          secondary: text("查看开户进度", "View Application Status")
+        },
+        completed: {
+          title: text("开户流程将继续处理", "Application Will Continue"),
+          desc: text("您的视频认证已通过。开户流程将继续处理，您可以查看最新进度。", "Your video verification has been approved. Your application will continue, and you can check the latest status."),
+          primary: text("查看开户进度", "View Application Status")
+        }
+      }
+    };
+
+    function setVideoScene(scene) {
+      state.triggerScene = videoScenes[scene] ? scene : "general";
+    }
+
+    function setAccountGuideScene(scene) {
+      state.accountScene = accountGuideScenes[scene] ? scene : "globalEntry";
+    }
+
+    function accountInitData(demoDone) {
+      const scene = accountGuideScenes[state.accountScene] || accountGuideScenes.globalEntry;
+      const content = demoDone ? scene.demoDone : scene.pending;
+      return {
+        icon: demoDone ? "success" : "open",
+        title: content.title,
+        desc: content.desc,
+        error: content.error,
+        noticeLevel: demoDone ? "info" : "warning",
+        primary: content.primary,
+        secondary: content.secondary
+      };
+    }
+
+    function videoScenarioGuide(sceneKey) {
+      const guides = {
+        addAccount: {
+          impact: text("新的交易账号将在认证通过后继续创建。", "The new trading account can continue being created once verification is approved."),
+          completed: text("现在可以继续创建第 2 个交易账号。", "You can now continue creating the second trading account."),
+          current: text("继续创建交易账号", "Continue creating trading account")
+        },
+        deposit: {
+          impact: text("您已提交的存款会保持待处理，认证通过后系统将继续入账到交易账号。", "Your submitted deposit will remain pending, and the system will continue crediting it to the trading account after approval."),
+          completed: text("系统将继续处理待处理存款，您可以在存款记录中查看最新状态。", "The system will continue processing the pending deposit. You can check the latest status in deposit records."),
+          current: text("查看存款记录", "View deposit record")
+        },
+        withdrawal: {
+          impact: text("取款申请需要在认证通过后继续提交。", "The withdrawal request can continue after verification is approved."),
+          completed: text("现在可以继续提交本次取款申请。", "You can now continue submitting this withdrawal request."),
+          current: text("继续取款", "Continue withdrawal")
+        },
+        application: {
+          impact: text("开户流程将在认证通过后继续处理。", "Your application will continue after verification is approved."),
+          completed: text("开户流程将继续处理，您可以回到开户页面查看后续状态。", "Your application will continue. You can return to the application page for the next status."),
+          current: text("继续开户流程", "Continue application")
+        },
+        balance: {
+          impact: text("认证通过前，部分账户功能可能暂时不可用。", "Some account features may be temporarily unavailable until verification is approved."),
+          completed: text("账户功能已恢复，您可以继续使用相关账户功能。", "Account features have been restored. You can continue using the related features."),
+          current: text("继续使用账户功能", "Continue account features")
+        },
+        general: {
+          impact: text("认证通过前，相关操作可能暂时无法继续。", "The related action may be temporarily unavailable until verification is approved."),
+          completed: text("暂未识别到发起认证的具体操作，请返回相关页面查看是否需要继续处理。", "We couldn’t identify the action that started this verification. Please return to the related page to check whether anything needs to continue."),
+          current: text("返回相关页面", "Return to related page")
+        }
+      };
+      return guides[sceneKey] || guides.general;
+    }
+
+    function videoCompletedData() {
+      const scene = videoScenes[state.triggerScene] || videoScenes.general;
+      const guide = videoScenarioGuide(state.triggerScene);
+      const completed = scene.completed || videoScenes.general.completed;
+      return {
+        icon: "success",
+        title: completed.title,
+        desc: completed.desc,
+        primary: completed.primary,
+        secondary: completed.secondary || text("返回首页", "Back to Home"),
+        error: completed.error,
+        noticeLevel: completed.error ? "info" : undefined,
+        info: [
+          {
+            kind: "status",
+            title: text("认证结果", "Verification Result"),
+            steps: [
+              {
+                state: "done",
+                label: text("视频认证已提交", "Video verification submitted"),
+                meta: text("我们已收到您的认证视频。", "We’ve received your verification video.")
+              },
+              {
+                state: "done",
+                label: text("视频认证已通过", "Video verification approved"),
+                meta: text("认证结果已生效。", "The verification result is now effective.")
+              },
+              {
+                state: "current",
+                label: guide.current,
+                meta: guide.completed
+              }
+            ]
+          },
+          {
+            kind: "action",
+            title: text("下一步", "Next Step"),
+            body: guide.completed
+          }
+        ]
+      };
+    }
+
+    function videoReviewingData() {
+      const scene = videoScenes[state.triggerScene] || videoScenes.general;
+      const guide = videoScenarioGuide(state.triggerScene);
+      const reviewing = scene.reviewing || videoScenes.general.reviewing;
+      return {
+        icon: "review",
+        title: text("视频认证已提交", "Video Verification Submitted"),
+        desc: reviewing.desc,
+        error: guide.impact,
+        noticeLevel: state.triggerScene === "deposit" ? "warning" : "info",
+        info: [
+          {
+            kind: "status",
+            title: text("当前认证状态", "Current Verification Status"),
+            steps: [
+              {
+                state: "done",
+                label: text("视频认证已提交", "Video verification submitted"),
+                meta: text("我们已收到您的认证视频。", "We’ve received your verification video.")
+              },
+              {
+                state: "current",
+                label: text("等待审核结果", "Waiting for review result"),
+                meta: text("审核完成后会通过 App 通知您。", "We’ll notify you in the app once the review is complete.")
+              },
+              {
+                state: "pending",
+                label: guide.current,
+                meta: guide.impact
+              }
+            ]
+          },
+          {
+            kind: "review",
+            title: text("等待期间", "While You Wait"),
+            body: text("请保持 App 通知可用。审核中无需重复录制视频，如需补充信息，页面会提示您继续处理。", "Keep app notifications available. You do not need to record again while under review; if more information is needed, the page will guide you.")
+          }
+        ],
+        primary: reviewing.primary,
+        secondary: text("返回首页", "Back to Home")
+      };
+    }
+
+    function videoRequiredData() {
+      const scene = videoScenes[state.triggerScene] || videoScenes.general;
+      return {
+        icon: "video",
+        title: scene.required.title,
+        desc: scene.required.desc,
+        error: scene.required.error,
+        noticeLevel: "warning",
+        primary: scene.required.primary,
+        secondary: scene.required.secondary
+      };
+    }
+
+    function noticeLevelForNode(node, demoDone) {
+      if (node.endsWith("_failed")) return "error";
+      if (node === "account_approved" && !demoDone) return "warning";
+      if (node === "video_required") return "warning";
+      return "info";
+    }
+
+    function nodeData() {
+      const demoDone = state.demoDone;
+      const data = {
+        account_init: accountInitData(demoDone),
+        account_interrupted: {
+          icon: "pause",
+          title: text("开户流程未完成", "Application Not Completed"),
+          desc: text("您的开户流程尚未完成。您可以继续填写，或稍后再回来完成。", "Your application is not completed yet. You can continue now or come back later."),
+          primary: text("继续开户", "Continue Application"),
+          secondary: text("返回首页", "Back to Home")
+        },
+        account_agreement_exit: {
+          icon: "pause",
+          title: text("退出协议签署？", "Exit Agreement Signing?"),
+          desc: text("退出后，本次协议签署进度将不会保存。再次开户时需要重新阅读并签署协议。", "If you exit now, your agreement signing progress will not be saved. You’ll need to read and sign the agreements again when you continue."),
+          primary: text("继续签署", "Continue Signing"),
+          secondary: text("退出签署", "Exit Signing")
+        },
+        account_reviewing: {
+          icon: demoDone ? "review" : "demo",
+          title: text("开户资料已提交", "Application Submitted"),
+          desc: demoDone
+            ? text("您的资料正在审核中，Demo 交易已完成。审核完成后，我们会通知您结果。", "Your information is under review, and demo trading is complete. We’ll notify you once the review is complete.")
+            : text("您的资料已进入审核。由于开户前需要完成 Demo 交易，建议您现在先完成 Demo。", "Your information is under review. Demo trading is required before account opening, so we recommend completing it now."),
+          error: demoDone
+            ? text("Demo 交易已完成，当前无需其他操作。审核完成后，我们会通知您结果。", "Demo trading is complete, and no further action is needed now. We’ll notify you once the review is complete.")
+            : text("您不需要重复提交开户资料。完成 Demo 后，系统会保留当前申请状态。", "You do not need to submit your application again. Once demo trading is completed, your current application status will be kept."),
+          noticeLevel: demoDone ? "info" : "warning",
+          info: demoDone ? [
+            {
+              kind: "status",
+              title: text("当前任务状态", "Current Task Status"),
+              steps: [
+                {
+                  state: "done",
+                  label: text("开户资料已提交", "Application submitted"),
+                  meta: text("我们已收到您的开户资料。", "We’ve received your application information.")
+                },
+                {
+                  state: "done",
+                  label: text("Demo 交易已完成", "Demo trading completed"),
+                  meta: text("已满足开户前置任务要求。", "The required pre-account-opening task is complete.")
+                },
+                {
+                  state: "current",
+                  label: text("等待审核结果", "Waiting for review result"),
+                  meta: text("审核完成后会通过 App 通知您。", "We’ll notify you in the app once the review is complete.")
+                },
+                {
+                  state: "pending",
+                  label: text("创建真实交易账号", "Create live trading account"),
+                  meta: text("资料通过后将继续创建账号。", "If approved, we’ll continue creating your account.")
+                }
+              ]
+            },
+            {
+              kind: "action",
+              title: text("等待期间", "While You Wait"),
+              body: text("请保持手机号和邮箱可接收通知。当前无需重复提交资料，如需补充信息，页面会给出可修改提示。", "Keep your phone number and email available for notifications. You do not need to submit again; if updates are needed, the page will show what can be changed.")
+            }
+          ] : [
+            {
+              kind: "status",
+              title: text("当前任务状态", "Current Task Status"),
+              steps: [
+                {
+                  state: "done",
+                  label: text("开户资料已提交", "Application submitted"),
+                  meta: text("我们已收到您的开户资料。", "We’ve received your application information.")
+                },
+                {
+                  state: "current",
+                  label: text("Demo 交易待完成", "Demo trading pending"),
+                  meta: text("可在等待审核期间先完成。", "You can complete it while waiting for review.")
+                },
+                {
+                  state: "pending",
+                  label: text("等待审核结果", "Waiting for review result"),
+                  meta: text("审核完成后会通过 App 通知您。", "We’ll notify you in the app once the review is complete.")
+                },
+                {
+                  state: "pending",
+                  label: text("创建真实交易账号", "Create live trading account"),
+                  meta: text("审核通过并完成 Demo 后继续开通。", "After approval and demo completion, we’ll continue opening the account.")
+                }
+              ]
+            },
+            {
+              kind: "action",
+              title: text("建议下一步", "Recommended Next Step"),
+              body: text("现在完成 Demo 交易，可以减少后续等待。Demo 完成状态会用于当前开户申请，无需重复提交资料。", "Complete demo trading now to reduce waiting later. The demo completion status will count toward this application, with no need to submit again.")
+            }
+          ],
+          primary: demoDone ? text("返回首页", "Back to Home") : text("去完成 Demo 交易", "Start Demo Trading"),
+          secondary: demoDone ? null : text("返回首页", "Back to Home")
+        },
+        account_approved: {
+          icon: demoDone ? "success" : "demo",
+          title: demoDone ? text("交易账号已创建", "Trading Account Created") : text("资料审核已通过", "Application Approved"),
+          desc: demoDone
+            ? text("您的真实交易账号已成功开通。现在可以存款并开始交易。", "Your live trading account has been created. You can now make a deposit and start trading.")
+            : text("您的开户资料已通过审核。请完成 Demo 交易后，我们将继续为您开通真实交易账号。", "Your application has been approved. Please complete demo trading so we can continue opening your live trading account."),
+          error: demoDone ? null : text("真实交易账号将在完成 Demo 交易后开通。", "Your live trading account will be opened after demo trading is completed."),
+          account: demoDone ? {
+            label: { zh: "外汇衍生品交易账号", en: "Forex Derivatives Trading Account" },
+            number: "MT5-204882",
+            status: { zh: "已开通", en: "Opened" },
+            balanceLabel: { zh: "当前余额", en: "Current Balance" },
+            balance: "0.00 USD",
+            details: [
+              { label: { zh: "入金状态", en: "Funding Status" }, value: { zh: "待入金", en: "Not Funded" } },
+              { label: { zh: "账户类型", en: "Account Type" }, value: { zh: "标准账户", en: "Standard" } },
+              { label: { zh: "交易平台", en: "Platform" }, value: "MT5" },
+              { label: { zh: "服务器", en: "Server" }, value: "Live-01" }
+            ],
+            note: {
+              zh: "当前余额为 0.00 USD。存款到账后即可开始外汇衍生品真实交易。",
+              en: "The current balance is 0.00 USD. You can start live forex derivatives trading once your deposit is credited."
+            }
+          } : null,
+          primary: demoDone ? text("去存款", "Make a Deposit") : text("去完成 Demo 交易", "Start Demo Trading"),
+          secondary: demoDone ? text("查看交易账号", "View Trading Account") : text("查看开户进度", "View Status")
+        },
+        account_failed: {
+          icon: "failed",
+          title: text("开户资料未通过审核", "Application Not Approved"),
+          desc: text("部分开户资料需要补充或修正。请根据页面提示检查后重新提交，我们会继续为您处理。", "Some account opening information needs to be updated. Please follow the page prompts, submit again, and we’ll continue processing your application."),
+          error: text("请返回开户资料页查看具体提示，并确认信息真实、完整、清晰。", "Please return to the application page to view the details, and make sure the information is accurate, complete, and clear."),
+          info: [
+            {
+              kind: "fix",
+              title: text("重新提交前请检查", "Before Resubmitting"),
+              items: [
+                text("身份信息是否与证件资料一致", "Identity details match your documents"),
+                text("证件照片或上传文件是否清晰完整", "ID photos or uploaded files are clear and complete"),
+                text("个人资料、交易设置和协议签署是否已完成", "Personal details, trading setup, and agreements are completed")
+              ]
+            },
+            {
+              kind: "action",
+              title: text("重新提交后", "After You Resubmit"),
+              body: text("我们会继续处理您的开户申请。若仍无法确认资料，您可以联系客服协助查看。", "We’ll continue processing your application. If the information still cannot be confirmed, you can contact support for help.")
+            }
+          ],
+          primary: text("重新提交资料", "Resubmit Information"),
+          secondary: text("联系客服", "Contact Support")
+        },
+        video_init: {
+          icon: "video",
+          title: text("需要完成视频认证", "Video Verification Required"),
+          desc: text("请完成一段简短的视频认证，以确认账户由您本人申请和使用。通过后可继续开户或使用相关账户功能。", "Complete a short video verification to confirm the account is being opened and used by you. Once approved, you can continue your application or use related account features."),
+          error: text("完成认证前，部分账户功能可能暂时不可用。", "Some account features may be temporarily unavailable until verification is completed."),
+          noticeLevel: "info",
+          tips: [
+            text("请确保本人单独入镜", "Make sure only you appear in the video"),
+            text("请在光线充足的环境中录制", "Record in a well-lit environment"),
+            text("请按照页面提示清晰朗读内容", "Read the statement clearly as shown on the screen")
+          ],
+          help: text("为什么需要认证？", "Why is this required?"),
+          primary: text("开始视频认证", "Start Video Verification"),
+          secondary: text("稍后完成", "Do It Later")
+        },
+        video_help: {
+          icon: "video",
+          title: text("为什么需要视频认证？", "Why Is Video Verification Required?"),
+          desc: text("这是一项账户安全与监管要求，用于确认本人申请和使用。", "This is an account security and regulatory requirement to confirm the account is being opened and used by you."),
+          info: [
+            {
+              kind: "summary",
+              title: text("用于确认本人操作", "Confirms It Is You"),
+              body: text("在开户或部分账户操作前，平台需要确认您的身份、账户申请意愿和相关风险声明。", "Before account opening or certain account actions, the platform needs to confirm your identity, application intent, and related risk acknowledgement."),
+              tags: [
+                text("监管要求", "Regulatory requirement"),
+                text("账户安全", "Account security")
+              ]
+            },
+            {
+              kind: "confirm",
+              title: text("认证会确认什么", "What We Confirm"),
+              items: [
+                text("是否由账户本人完成认证", "The account holder completes the verification"),
+                text("人脸是否与身份资料一致", "The face matches the identity information"),
+                text("是否按页面内容完成朗读", "The statement is read as shown"),
+                text("是否确认账户申请和使用意愿", "Account application and usage intent are confirmed")
+              ]
+            },
+            {
+              kind: "prepare",
+              title: text("认证前请准备", "Before You Start"),
+              items: [
+                text("本人单独入镜", "Only you appear in the video"),
+                text("光线充足", "A well-lit environment"),
+                text("清晰朗读", "Read clearly"),
+                text("网络稳定", "A stable network connection")
+              ]
+            },
+            {
+              kind: "impact",
+              title: text("未完成认证会影响什么", "What Happens If Verification Is Not Completed"),
+              body: text("认证完成前，部分功能可能暂时不可用。存款可先提交但资金会保持待处理；新增交易账号、取款等操作需认证通过后继续。", "Until verification is completed, some features may be temporarily unavailable. Deposits can be submitted but remain pending; adding trading accounts or withdrawals can continue after approval.")
+            },
+            {
+              kind: "privacy",
+              title: text("我们如何使用您的视频资料", "How We Use Your Video Information"),
+              body: text("您的视频资料仅用于身份确认、账户申请确认、合规审核及账户安全目的。", "Your video information is used only for identity confirmation, account application confirmation, compliance review, and account security purposes.")
+            }
+          ],
+          primary: text("开始视频认证", "Start Video Verification"),
+          secondary: text("返回", "Back")
+        },
+        video_required: videoRequiredData(),
+        video_reviewing: videoReviewingData(),
+        video_application_waiting: {
+          icon: "review",
+          title: text("开户流程等待认证结果", "Application Waiting for Verification"),
+          desc: text("您的视频认证已提交。认证通过后，开户流程将继续处理。", "Your video verification has been submitted. Your application will continue once verification is approved."),
+          error: text("当前无需重复提交开户资料，请等待视频认证结果。", "You do not need to submit your application again. Please wait for the video verification result."),
+          noticeLevel: "info",
+          info: [
+            {
+              kind: "status",
+              title: text("当前处理状态", "Current Status"),
+              steps: [
+                {
+                  state: "done",
+                  label: text("视频认证已提交", "Video verification submitted"),
+                  meta: text("我们已收到您的认证视频。", "We’ve received your verification video.")
+                },
+                {
+                  state: "current",
+                  label: text("等待认证结果", "Waiting for verification result"),
+                  meta: text("认证通过后，开户流程将继续处理。", "Your application will continue after verification is approved.")
+                },
+                {
+                  state: "pending",
+                  label: text("继续开户流程", "Continue application"),
+                  meta: text("后续结果会通过 App 通知您。", "We’ll notify you in the app about the next result.")
+                }
+              ]
+            }
+          ],
+          primary: text("查看开户进度", "View Application Status"),
+          secondary: text("返回首页", "Back to Home"),
+          triggerScene: "application"
+        },
+        video_completed: videoCompletedData(),
+        video_failed: {
+          icon: "failed",
+          title: text("视频认证未通过", "Video Verification Not Approved"),
+          desc: text("本次视频认证暂未通过。请按页面录制要求重新提交，或联系客服协助处理。", "This video verification was not approved. Please follow the recording instructions and submit again, or contact support for help."),
+          error: text("重新录制时，请确保本人单独入镜、面部清晰，并按页面提示完整完成认证。", "When recording again, make sure only you appear, your face is clear, and the verification is completed as instructed."),
+          noticeLevel: "error",
+          info: [
+            {
+              kind: "fix",
+              title: text("重新录制前请检查", "Before Recording Again"),
+              items: [
+                text("确保只有本人出现在画面中", "Make sure only you appear in the video"),
+                text("保持光线充足，面部完整清晰", "Use good lighting and keep your full face clear"),
+                text("按页面文字完整、清晰朗读", "Read the on-screen statement completely and clearly")
+              ]
+            },
+            {
+              kind: "action",
+              title: text("如果仍无法通过", "If It Still Fails"),
+              body: text("您可以联系客服协助查看。认证通过前，受影响的账户操作可能暂时无法继续。", "You can contact support for help. Affected account actions may remain unavailable until verification is approved.")
+            }
+          ],
+          primary: text("重新录制", "Record Again"),
+          secondary: text("联系客服", "Contact Support")
+        }
+      };
+
+      const current = data[state.node];
+      return {
+        ...current,
+        noticeLevel: current.noticeLevel || noticeLevelForNode(state.node, demoDone)
+      };
+    }
+
+    function iconSvg(type) {
+      const middle = {
+        open: '<path data-accent d="M42 28c0-12 9.7-21.8 21.7-21.8s21.7 9.8 21.7 21.8v7.3l10.2 10.3H70.8c-2.3.8-4.7 1.2-7.1 1.2C51.7 46.8 42 40 42 28Z"/><circle data-stroke cx="64" cy="23" r="7.8"/><path data-stroke d="M50.5 43.5c1.8-8 6.4-12 13.3-12 4.9 0 8.6 1.8 11.1 5.3"/><path data-stroke d="M79.5 33.5v16M71.5 41.5h16"/>',
+        video: '<path data-accent d="M38 18h44a11 11 0 0 1 11 11v24a11 11 0 0 1-11 11H38a11 11 0 0 1-11-11V29a11 11 0 0 1 11-11Z"/><path data-stroke d="M38 18h44a11 11 0 0 1 11 11v24a11 11 0 0 1-11 11H38a11 11 0 0 1-11-11V29a11 11 0 0 1 11-11Z"/><path data-stroke d="M93 34l18-10v34L93 48"/><circle data-stroke cx="59" cy="34" r="7"/><path data-stroke d="M45 54c2.5-7.5 7.2-11.2 14-11.2s11.5 3.7 14 11.2"/>',
+        demo: '<path data-accent d="M38 43.5c4.3-20.5 15.7-31 34.2-31 8.3 0 14.7 2 19.2 6v33h-53.4v-8Z"/><path data-stroke d="M46 45l12-13 9 8 17-20"/><path data-stroke d="M42 56.5h58"/><path data-stroke d="M42 24v32h58"/>',
+        pause: '<path data-accent d="M42 18h46a10 10 0 0 1 10 10v20a10 10 0 0 1-10 10H42a10 10 0 0 1-10-10V28a10 10 0 0 1 10-10Z"/><path data-stroke d="M58 30v17M75 30v17"/><path data-stroke d="M35 62h60"/>',
+        review: '<path data-accent d="M45 11h38l13 13v37H45z"/><path data-stroke d="M45 11h38l13 13v37H45z"/><path data-stroke d="M81 12v14h14"/><path data-stroke d="M55 35h30M55 46h22"/><circle data-stroke cx="88" cy="58" r="12"/><path data-stroke d="M97 67l8 8"/>',
+        success: '<circle data-accent cx="68" cy="36" r="28"/><circle data-stroke cx="68" cy="36" r="28"/><path data-stroke d="M54 36l10 10 20-22"/><path data-stroke d="M35 70h66"/>',
+        failed: '<circle data-accent cx="68" cy="36" r="28"/><circle data-stroke cx="68" cy="36" r="28"/><path data-stroke d="M57 25l22 22M79 25 57 47"/><path data-stroke d="M35 70h66"/>'
+      }[type];
+
+      return `
+        <svg viewBox="0 0 136 82" role="img">
+          <path data-stroke d="M25 18c-8 10-8 28 0 38M17 10c-13 17-13 43 0 60" opacity=".9"/>
+          ${middle}
+          <path data-stroke d="M111 18c8 10 8 28 0 38M119 10c13 17 13 43 0 60" opacity=".9"/>
+        </svg>
+      `;
+    }
+
+    function render() {
+      normalizeNode();
+      const data = nodeData();
+      const lang = state.lang;
+      const names = nodeNameMap();
+      const isAccountPage = state.flowType === "account";
+      const isVideoPage = state.flowType === "video" && videoPageNodes.has(state.node);
+      const isPageMode = isAccountPage || isVideoPage;
+
+      document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+      document.querySelector(".mask").dataset.mode = isPageMode ? "page" : "sheet";
+      const sheet = document.querySelector(".sheet");
+      sheet.dataset.node = state.node;
+      sheet.dataset.demoState = state.demoDone ? "done" : "pending";
+      sheet.setAttribute("aria-label", isPageMode ? "Feedback page" : "Open account bottom sheet");
+      const pageNav = document.querySelector("#pageNav");
+      pageNav.hidden = !isPageMode;
+      document.querySelector("#pageNavTitle").textContent = isVideoPage ? labels[lang].videoPageTitle : labels[lang].accountPageTitle;
+      document.querySelector("#visual").innerHTML = iconSvg(data.icon);
+      document.querySelector("#sheetTitle").textContent = data.title[lang];
+      document.querySelector("#sheetDesc").textContent = data.desc[lang];
+      const failureReason = document.querySelector("#failureReason");
+      failureReason.textContent = data.error ? data.error[lang] : "";
+      failureReason.dataset.level = data.noticeLevel || "info";
+      if (data.error) {
+        failureReason.setAttribute("role", data.noticeLevel === "error" ? "alert" : "status");
+      } else {
+        failureReason.removeAttribute("role");
+      }
+      failureReason.hidden = !data.error;
+      const tipsCard = document.querySelector("#tipsCard");
+      if (data.tips || data.help) {
+        const tips = data.tips ? `<ul>${data.tips.map((tip) => `<li>${tip[lang]}</li>`).join("")}</ul>` : "";
+        const help = data.help ? `<button type="button" data-help-video>${data.help[lang]}</button>` : "";
+        tipsCard.innerHTML = `${tips}${help}`;
+        tipsCard.hidden = false;
+      } else {
+        tipsCard.innerHTML = "";
+        tipsCard.hidden = true;
+      }
+      const infoCard = document.querySelector("#infoCard");
+      if (data.info) {
+        infoCard.innerHTML = data.info.map((item) => `
+          <div class="info-item" data-kind="${item.kind || "section"}">
+            <strong>${item.title[lang]}</strong>
+            ${item.body ? `<span>${item.body[lang]}</span>` : ""}
+            ${item.tags ? `<div class="info-tags">${item.tags.map((entry) => `<span class="info-tag">${entry[lang]}</span>`).join("")}</div>` : ""}
+            ${item.steps ? `<div class="status-steps">${item.steps.map((step) => `
+              <div class="status-step" data-state="${step.state || "pending"}">
+                <i class="status-dot" aria-hidden="true"></i>
+                <div class="status-step-content">
+                  <b>${step.label[lang]}</b>
+                  ${step.meta ? `<small>${step.meta[lang]}</small>` : ""}
+                </div>
+              </div>
+            `).join("")}</div>` : ""}
+            ${item.items ? `<ul>${item.items.map((entry) => `<li>${entry[lang]}</li>`).join("")}</ul>` : ""}
+          </div>
+        `).join("");
+        infoCard.hidden = false;
+      } else {
+        infoCard.innerHTML = "";
+        infoCard.hidden = true;
+      }
+      const accountCard = document.querySelector("#accountCard");
+      if (data.account) {
+        const accountValue = (value) => typeof value === "string" ? value : value[lang];
+        accountCard.innerHTML = `
+          <div class="account-card-head">
+            <div class="account-title">
+            <span>${data.account.label[lang]}</span>
+              <strong class="account-number">${data.account.number}</strong>
+            </div>
+            <em>${data.account.status[lang]}</em>
+          </div>
+          <div class="account-balance">
+            <span>${data.account.balanceLabel[lang]}</span>
+            <strong>${data.account.balance}</strong>
+          </div>
+          <div class="account-details">
+            ${data.account.details.map((item) => `
+              <div class="account-detail">
+                <span>${item.label[lang]}</span>
+                <strong>${accountValue(item.value)}</strong>
+              </div>
+            `).join("")}
+          </div>
+          <small>${data.account.note[lang]}</small>
+        `;
+        accountCard.hidden = false;
+      } else {
+        accountCard.innerHTML = "";
+        accountCard.hidden = true;
+      }
+
+      document.querySelector("#primaryAction").innerHTML = `${data.primary[lang]}<span>→</span>`;
+      const secondaryAction = document.querySelector("#secondaryAction");
+      secondaryAction.textContent = data.secondary ? data.secondary[lang] : "";
+      secondaryAction.hidden = !data.secondary;
+
+      document.querySelector("#panelTitle").textContent = labels[lang].panelTitle;
+      document.querySelector("#flowLabel").textContent = labels[lang].flowLabel;
+      document.querySelector("#nodeLabel").textContent = labels[lang].nodeLabel;
+      document.querySelector("#demoLabel").textContent = labels[lang].demoLabel;
+      document.querySelector("#langLabel").textContent = labels[lang].langLabel;
+      document.querySelector("#panelSummary").textContent = `${currentFlow().label[lang]} / ${names[state.node][lang]}`;
+
+      document.querySelector("#flowSwitch").innerHTML = Object.entries(flows)
+        .map(([id, flow]) => `<button type="button" data-flow="${id}" class="${id === state.flowType ? "active" : ""}">${flow.label[lang]}</button>`)
+        .join("");
+
+      const showAccountScene = state.flowType === "account" && state.node === "account_init";
+      const showVideoScene = state.flowType === "video" && sceneAwareVideoNodes.has(state.node);
+      document.querySelector("#demoField").hidden = state.flowType !== "account";
+      document.querySelector("#triggerSceneField").hidden = !(showAccountScene || showVideoScene);
+      document.querySelector("#triggerSceneLabel").textContent = showAccountScene ? labels[lang].accountSceneLabel : labels[lang].videoSceneLabel;
+
+      const triggerSceneSelect = document.querySelector("#triggerSceneSelect");
+      const sceneOptions = showAccountScene ? accountGuideScenes : videoScenes;
+      const selectedScene = showAccountScene ? state.accountScene : state.triggerScene;
+      triggerSceneSelect.innerHTML = Object.entries(sceneOptions)
+        .map(([id, scene]) => `<option value="${id}" ${id === selectedScene ? "selected" : ""}>${scene.label[lang]}</option>`)
+        .join("");
+
+      document.querySelectorAll("#demoSwitch [data-demo]").forEach((button) => {
+        const isDone = button.dataset.demo === "true";
+        button.textContent = isDone ? labels[lang].yes : labels[lang].no;
+        button.classList.toggle("active", isDone === state.demoDone);
+      });
+
+      document.querySelectorAll("[data-lang]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.lang === state.lang);
+      });
+
+      document.querySelector("#nodeButtons").innerHTML = currentFlow().nodes.map((id) => `
+        <button type="button" data-node="${id}" class="${id === state.node ? "active" : ""}">${names[id][lang]}</button>
+      `).join("");
+    }
+
+    document.querySelector("#flowSwitch").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-flow]");
+      if (!button) return;
+      state.flowType = button.dataset.flow;
+      normalizeNode();
+      render();
+    });
+
+    document.querySelector("#triggerSceneSelect").addEventListener("change", (event) => {
+      if (state.flowType === "account" && state.node === "account_init") {
+        setAccountGuideScene(event.target.value);
+      } else {
+        setVideoScene(event.target.value);
+        if (state.flowType === "video" && state.node.startsWith("video_completed")) {
+          state.node = "video_completed";
+        }
+      }
+      render();
+    });
+
+    document.querySelector("#demoSwitch").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-demo]");
+      if (!button) return;
+      state.demoDone = button.dataset.demo === "true";
+      render();
+    });
+
+    document.querySelector("#langSwitch").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-lang]");
+      if (!button) return;
+      state.lang = button.dataset.lang;
+      render();
+    });
+
+    document.querySelector("#nodeButtons").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-node]");
+      if (!button) return;
+      const previousNode = state.node;
+      state.node = button.dataset.node;
+      const data = nodeData();
+      if (state.flowType === "video" && data.triggerScene) {
+        setVideoScene(data.triggerScene);
+      }
+      if (state.flowType === "video" && state.node === "video_help") {
+        state.returnNode = previousNode && previousNode !== "video_help" ? previousNode : "video_init";
+      }
+      render();
+    });
+
+    document.querySelector("#tipsCard").addEventListener("click", (event) => {
+      if (!event.target.closest("[data-help-video]")) return;
+      state.flowType = "video";
+      state.returnNode = state.node;
+      state.node = "video_help";
+      render();
+    });
+
+    document.querySelector("#pageBack").addEventListener("click", () => {
+      if (state.flowType === "account") {
+        state.node = "account_init";
+      } else if (state.flowType === "video") {
+        state.node = "video_init";
+      }
+      render();
+    });
+
+    document.querySelector("#primaryAction").addEventListener("click", () => {
+      if (state.flowType === "account" && state.node === "account_init") {
+        state.node = "account_reviewing";
+      } else if (state.flowType === "account" && state.node === "account_interrupted") {
+        state.node = "account_reviewing";
+      } else if (state.flowType === "account" && state.node === "account_agreement_exit") {
+        state.node = "account_interrupted";
+      } else if (state.flowType === "account" && state.node === "account_reviewing" && state.demoDone) {
+        state.node = "account_init";
+      } else if (state.flowType === "account" && (state.node === "account_reviewing" || state.node === "account_approved") && !state.demoDone) {
+        state.demoDone = true;
+      } else if (state.flowType === "account" && state.node.startsWith("account_failed")) {
+        state.node = "account_interrupted";
+      } else if (state.flowType === "video" && state.node.startsWith("video_failed")) {
+        state.node = "video_reviewing";
+      } else if (state.flowType === "video" && state.node === "video_help") {
+        state.node = "video_reviewing";
+      } else if (state.flowType === "video" && state.node === "video_init") {
+        state.node = "video_reviewing";
+      } else if (state.flowType === "video" && state.node === "video_required") {
+        state.node = "video_reviewing";
+      } else if (state.flowType === "video" && state.node === "video_reviewing") {
+        state.node = "video_completed";
+      }
+      render();
+    });
+
+    document.querySelector("#secondaryAction").addEventListener("click", () => {
+      if (state.flowType === "account") {
+        state.node = "account_init";
+      } else if (state.node === "video_help") {
+        state.node = currentFlow().nodes.includes(state.returnNode) ? state.returnNode : "video_init";
+      } else {
+        state.node = "video_init";
+      }
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
