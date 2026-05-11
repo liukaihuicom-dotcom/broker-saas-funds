@@ -1,0 +1,1051 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>邮件退订管理</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --nav: #001529;
+      --nav-deep: #000c17;
+      --nav-active: #1890ff;
+      --page: #f0f2f5;
+      --surface: #fff;
+      --surface-soft: #fafafa;
+      --line: #e8e8e8;
+      --line-strong: #d9d9d9;
+      --ink: #262626;
+      --text: #595959;
+      --muted: #8c8c8c;
+      --primary: #1890ff;
+      --primary-press: #096dd9;
+      --success: #52c41a;
+      --warning: #faad14;
+      --danger: #ff4d4f;
+      --cyan: #5cc8d7;
+      --shadow: 0 2px 8px rgb(0 0 0 / .08);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--page);
+      color: var(--ink);
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 208px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: hidden;
+      background: var(--nav);
+      color: rgb(255 255 255 / .72);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand {
+      height: 68px;
+      padding: 0 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #fff;
+      background: var(--nav-deep);
+      font-size: 20px;
+      font-weight: 650;
+      letter-spacing: .2px;
+    }
+
+    .brand-mark {
+      position: relative;
+      width: 30px;
+      height: 30px;
+      border: 4px solid #1890ff;
+      transform: rotate(45deg);
+      border-radius: 6px;
+    }
+
+    .brand-mark::before,
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      border-radius: 999px;
+      background: #ff4d4f;
+    }
+
+    .brand-mark::before {
+      width: 7px;
+      height: 7px;
+      left: 7px;
+      top: 7px;
+    }
+
+    .brand-mark::after {
+      width: 5px;
+      height: 5px;
+      right: -7px;
+      bottom: 5px;
+      background: #69c0ff;
+    }
+
+    .brand span {
+      transform: translateY(-1px);
+    }
+
+    .nav {
+      padding: 0;
+      margin: 0;
+      list-style: none;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgb(255 255 255 / .18) transparent;
+    }
+
+    .nav li {
+      min-height: 48px;
+      padding: 0 18px 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      border-left: 3px solid transparent;
+    }
+
+    .nav li.group {
+      justify-content: space-between;
+      color: rgb(255 255 255 / .9);
+      background: rgb(255 255 255 / .03);
+    }
+
+    .nav li.child {
+      padding-left: 49px;
+      background: #000c17;
+    }
+
+    .nav li.active {
+      color: #fff;
+      background: var(--nav-active);
+      border-left-color: #fff;
+    }
+
+    .nav svg {
+      width: 15px;
+      height: 15px;
+      flex: 0 0 auto;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .collapse {
+      margin-top: auto;
+      height: 44px;
+      border-top: 1px solid rgb(255 255 255 / .08);
+      display: flex;
+      align-items: center;
+      padding-left: 24px;
+      color: rgb(255 255 255 / .72);
+    }
+
+    .main {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      height: 50px;
+      flex: 0 0 auto;
+      background: var(--surface);
+      box-shadow: 0 1px 4px rgb(0 21 41 / .08);
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 0 26px;
+    }
+
+    .avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: #d9d9d9;
+      box-shadow: inset 0 0 0 1px rgb(0 0 0 / .04);
+    }
+
+    .content {
+      padding: 16px 24px 28px;
+    }
+
+    .crumbs {
+      display: flex;
+      gap: 9px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 14px;
+    }
+
+    .crumbs strong {
+      color: var(--text);
+      font-weight: 400;
+    }
+
+    .page-title {
+      margin: 0 0 8px;
+      font-size: 22px;
+      line-height: 1.3;
+      font-weight: 650;
+    }
+
+    .subtitle {
+      margin: 0 0 16px;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .btn,
+    .field,
+    select {
+      height: 32px;
+      border: 1px solid var(--line-strong);
+      border-radius: 2px;
+      background: #fff;
+      color: var(--ink);
+      font-size: 14px;
+      transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 0 15px;
+      white-space: nowrap;
+    }
+
+    .btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .btn.primary {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn.primary:hover {
+      border-color: #40a9ff;
+      background: #40a9ff;
+    }
+
+    .btn:not(.primary):hover,
+    .field:hover,
+    select:hover {
+      border-color: #40a9ff;
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .field {
+      width: 280px;
+      padding: 4px 11px;
+      outline: 0;
+    }
+
+    .field:focus,
+    select:focus,
+    textarea:focus {
+      border-color: #40a9ff;
+      box-shadow: 0 0 0 2px rgb(24 144 255 / .16);
+    }
+
+    select {
+      min-width: 156px;
+      padding: 4px 34px 4px 11px;
+      outline: 0;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .metric {
+      min-width: 0;
+      padding: 18px 20px;
+      background: var(--surface);
+      border: 1px solid #f0f0f0;
+      box-shadow: var(--shadow);
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 26px;
+      line-height: 1;
+      font-weight: 500;
+    }
+
+    .metric small {
+      display: inline-flex;
+      margin-top: 10px;
+      color: var(--text);
+      font-size: 12px;
+    }
+
+    .panel {
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      min-height: 48px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .panel-title {
+      font-size: 15px;
+      font-weight: 650;
+    }
+
+    .panel-note {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      min-width: 930px;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      padding: 15px 16px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      background: #fafafa;
+      color: var(--ink);
+      font-weight: 650;
+    }
+
+    tr:hover td {
+      background: #e6f7ff;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .uid {
+      color: var(--text);
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 8px;
+      border: 1px solid;
+      border-radius: 2px;
+      font-size: 12px;
+      line-height: 20px;
+      white-space: nowrap;
+    }
+
+    .tag.green {
+      color: #389e0d;
+      background: #f6ffed;
+      border-color: #b7eb8f;
+    }
+
+    .tag.blue {
+      color: #096dd9;
+      background: #e6f7ff;
+      border-color: #91d5ff;
+    }
+
+    .tag.gold {
+      color: #d48806;
+      background: #fffbe6;
+      border-color: #ffe58f;
+    }
+
+    .tag.red {
+      color: #cf1322;
+      background: #fff1f0;
+      border-color: #ffa39e;
+    }
+
+    .action {
+      border: 0;
+      background: transparent;
+      color: var(--primary);
+      padding: 0;
+      font-size: 14px;
+    }
+
+    .action + .action {
+      margin-left: 14px;
+    }
+
+    .pager {
+      min-height: 56px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    .page-item {
+      min-width: 32px;
+      height: 32px;
+      border: 1px solid var(--line-strong);
+      border-radius: 2px;
+      background: #fff;
+      color: var(--text);
+    }
+
+    .page-item.active {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .drawer-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      justify-content: flex-end;
+      background: rgb(0 0 0 / .42);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
+    }
+
+    .drawer-mask.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .drawer {
+      width: min(600px, 100vw);
+      height: 100%;
+      background: var(--surface);
+      transform: translateX(100%);
+      transition: transform .24s ease;
+      display: flex;
+      flex-direction: column;
+      box-shadow: -6px 0 16px rgb(0 0 0 / .12);
+    }
+
+    .drawer-mask.open .drawer {
+      transform: translateX(0);
+    }
+
+    .drawer-head {
+      height: 55px;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 16px;
+      font-weight: 650;
+    }
+
+    .close {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .form {
+      padding: 24px;
+      overflow-y: auto;
+      display: grid;
+      gap: 16px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 104px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+    }
+
+    .form-row label {
+      padding-top: 6px;
+      color: var(--text);
+      font-size: 14px;
+      text-align: right;
+    }
+
+    .form-row .required::before {
+      content: "* ";
+      color: var(--danger);
+    }
+
+    .form input,
+    .form select,
+    .form textarea {
+      width: 100%;
+      min-height: 32px;
+      border: 1px solid var(--line-strong);
+      border-radius: 2px;
+      padding: 4px 11px;
+      outline: 0;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    .form textarea {
+      min-height: 108px;
+      resize: vertical;
+    }
+
+    .drawer-actions {
+      margin-top: auto;
+      padding: 12px 24px 18px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      top: 68px;
+      z-index: 30;
+      width: min(360px, calc(100vw - 48px));
+      padding: 12px 16px;
+      background: #fff;
+      border-left: 4px solid var(--success);
+      box-shadow: 0 4px 14px rgb(0 0 0 / .14);
+      color: var(--text);
+      opacity: 0;
+      transform: translateY(-10px);
+      pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease;
+      font-size: 14px;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 980px) {
+      .app {
+        grid-template-columns: 72px minmax(0, 1fr);
+      }
+
+      .brand {
+        justify-content: center;
+        padding: 0;
+      }
+
+      .brand span,
+      .nav .label,
+      .nav .chevron {
+        display: none;
+      }
+
+      .nav li {
+        justify-content: center;
+        padding: 0;
+      }
+
+      .nav li.child {
+        padding: 0;
+      }
+
+      .collapse {
+        justify-content: center;
+        padding: 0;
+      }
+
+      .metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      .app {
+        display: block;
+      }
+
+      .sidebar {
+        position: static;
+        width: 100%;
+        height: auto;
+      }
+
+      .brand {
+        justify-content: flex-start;
+        padding: 0 18px;
+      }
+
+      .brand span,
+      .nav .label,
+      .nav .chevron {
+        display: inline;
+      }
+
+      .nav {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        max-height: 240px;
+      }
+
+      .nav li,
+      .nav li.child {
+        justify-content: flex-start;
+        padding: 0 18px;
+      }
+
+      .collapse {
+        display: none;
+      }
+
+      .content {
+        padding: 14px 14px 22px;
+      }
+
+      .metrics {
+        grid-template-columns: 1fr;
+      }
+
+      .field,
+      select {
+        width: 100%;
+        min-width: 0;
+      }
+
+      .toolbar {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+
+      .form-row label {
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" aria-label="OMS navigation">
+      <div class="brand">
+        <i class="brand-mark" aria-hidden="true"></i>
+        <span>-OMS-</span>
+      </div>
+      <ul class="nav">
+        <li>
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v4l3 2"></path></svg>
+          <span class="label">welcome</span>
+        </li>
+        <li class="group">
+          <span><svg viewBox="0 0 24 24"><path d="M5 5h14v14H5z"></path><path d="M8 9h8M8 13h8"></path></svg><span class="label">模板配置</span></span>
+          <span class="chevron">⌃</span>
+        </li>
+        <li class="child">
+          <svg viewBox="0 0 24 24"><path d="M4 7h16v10H4z"></path><path d="m4 7 8 6 8-6"></path></svg>
+          <span class="label">Email</span>
+        </li>
+        <li class="child active">
+          <svg viewBox="0 0 24 24"><path d="M4 7h16v10H4z"></path><path d="m4 7 8 6 8-6"></path><path d="M8 19h8"></path></svg>
+          <span class="label">邮件退订</span>
+        </li>
+        <li class="child">
+          <svg viewBox="0 0 24 24"><path d="M7 8h10M7 12h6"></path><path d="M5 5h14v14H5z"></path></svg>
+          <span class="label">通知</span>
+        </li>
+        <li class="child">
+          <svg viewBox="0 0 24 24"><path d="M8 5h8v14H8z"></path><path d="M11 17h2"></path></svg>
+          <span class="label">短信</span>
+        </li>
+        <li class="group">
+          <span><svg viewBox="0 0 24 24"><path d="M8 7h8M8 12h8M8 17h5"></path><path d="M4 4h16v16H4z"></path></svg><span class="label">渠道管理</span></span>
+          <span class="chevron">⌄</span>
+        </li>
+        <li class="group">
+          <span><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M12 3v3M12 18v3M3 12h3M18 12h3"></path></svg><span class="label">系统配置</span></span>
+          <span class="chevron">⌄</span>
+        </li>
+        <li class="group">
+          <span><svg viewBox="0 0 24 24"><path d="M5 19 19 5"></path><path d="M6 6h5v5"></path><path d="M18 18h-5v-5"></path></svg><span class="label">定时任务</span></span>
+          <span class="chevron">⌄</span>
+        </li>
+        <li class="group">
+          <span><svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H7l-4 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path></svg><span class="label">消息查询</span></span>
+          <span class="chevron">⌄</span>
+        </li>
+      </ul>
+      <div class="collapse">☰</div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="avatar" aria-label="user avatar"></div>
+      </header>
+      <section class="content">
+        <nav class="crumbs" aria-label="breadcrumb">
+          <span>Home</span><span>/</span><span>模板配置</span><span>/</span><strong>邮件退订</strong>
+        </nav>
+
+        <h1 class="page-title">【邮件】退订管理</h1>
+        <p class="subtitle">用于查询、导入和维护用户邮件退订记录，支持按业务类型、模板和退订范围过滤。</p>
+
+        <div class="toolbar" role="search">
+          <button class="btn primary" type="button" id="openDrawer">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
+            新增
+          </button>
+          <select aria-label="业务类型">
+            <option>OMS</option>
+            <option>CRM</option>
+            <option>IB Portal</option>
+          </select>
+          <select aria-label="退订状态">
+            <option>全部状态</option>
+            <option>已退订</option>
+            <option>已恢复</option>
+            <option>待确认</option>
+          </select>
+          <input class="field" type="search" placeholder="邮箱、UID、退订原因、模板Id" id="searchInput">
+          <button class="btn primary" type="button" id="searchBtn">搜索</button>
+          <button class="btn" type="button" id="resetBtn">重置</button>
+        </div>
+
+        <div class="metrics" aria-label="unsubscribe metrics">
+          <div class="metric">
+            <span>退订总数</span>
+            <strong>1,284</strong>
+            <small>当前已生效记录</small>
+          </div>
+          <div class="metric">
+            <span>本周新增</span>
+            <strong>72</strong>
+            <small>较上周 +12.5%</small>
+          </div>
+          <div class="metric">
+            <span>确认成功率</span>
+            <strong>98.6%</strong>
+            <small>邮件链接确认</small>
+          </div>
+          <div class="metric">
+            <span>影响模板</span>
+            <strong>18</strong>
+            <small>覆盖 4 个业务流程</small>
+          </div>
+        </div>
+
+        <section class="panel" aria-labelledby="tableTitle">
+          <div class="panel-head">
+            <div class="panel-title" id="tableTitle">退订记录</div>
+            <div class="panel-note">最近更新时间 2026-05-11 15:24:08</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>邮箱</th>
+                  <th>UID</th>
+                  <th>来源模板</th>
+                  <th>退订范围</th>
+                  <th>退订原因</th>
+                  <th>更新时间</th>
+                  <th>状态</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="recordBody">
+                <tr>
+                  <td>alina.rossi@example.com</td>
+                  <td class="uid">10008427</td>
+                  <td>A_a_Registration1_Email</td>
+                  <td><span class="tag blue">营销邮件</span></td>
+                  <td>发送频率过高</td>
+                  <td>2026-05-11<br><span class="muted">14:12:36</span></td>
+                  <td><span class="tag green">已退订</span></td>
+                  <td><button class="action" type="button">详情</button><button class="action" type="button">恢复</button></td>
+                </tr>
+                <tr>
+                  <td>mohamed.khan@example.com</td>
+                  <td class="uid">10007318</td>
+                  <td>B_g_account_closure_Email</td>
+                  <td><span class="tag gold">账户提醒</span></td>
+                  <td>账户已关闭</td>
+                  <td>2026-05-10<br><span class="muted">18:31:05</span></td>
+                  <td><span class="tag green">已退订</span></td>
+                  <td><button class="action" type="button">详情</button><button class="action" type="button">恢复</button></td>
+                </tr>
+                <tr>
+                  <td>lucia.martin@example.com</td>
+                  <td class="uid">10006194</td>
+                  <td>C_e_Margin_Call_Email</td>
+                  <td><span class="tag red">全部邮件</span></td>
+                  <td>不再需要服务</td>
+                  <td>2026-05-10<br><span class="muted">09:47:22</span></td>
+                  <td><span class="tag green">已退订</span></td>
+                  <td><button class="action" type="button">详情</button><button class="action" type="button">恢复</button></td>
+                </tr>
+                <tr>
+                  <td>nora.chen@example.com</td>
+                  <td class="uid">10005890</td>
+                  <td>A_b_Registration2_Email</td>
+                  <td><span class="tag blue">营销邮件</span></td>
+                  <td>用户主动点击退订链接</td>
+                  <td>2026-05-09<br><span class="muted">21:02:49</span></td>
+                  <td><span class="tag gold">待确认</span></td>
+                  <td><button class="action" type="button">详情</button><button class="action" type="button">确认</button></td>
+                </tr>
+                <tr>
+                  <td>kevin.brown@example.com</td>
+                  <td class="uid">10004322</td>
+                  <td>D_d_Deposit_Promo_Email</td>
+                  <td><span class="tag blue">营销邮件</span></td>
+                  <td>手动导入黑名单</td>
+                  <td>2026-05-08<br><span class="muted">11:19:57</span></td>
+                  <td><span class="tag green">已退订</span></td>
+                  <td><button class="action" type="button">详情</button><button class="action" type="button">恢复</button></td>
+                </tr>
+                <tr>
+                  <td>sofia.ivanova@example.com</td>
+                  <td class="uid">10003744</td>
+                  <td>B_b_KYC successful_Email</td>
+                  <td><span class="tag gold">账户提醒</span></td>
+                  <td>客服恢复订阅</td>
+                  <td>2026-05-07<br><span class="muted">16:08:13</span></td>
+                  <td><span class="tag blue">已恢复</span></td>
+                  <td><button class="action" type="button">详情</button><button class="action" type="button">退订</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pager" aria-label="pagination">
+            <button class="page-item" type="button" disabled>&lt;</button>
+            <button class="page-item active" type="button">1</button>
+            <button class="page-item" type="button">2</button>
+            <button class="page-item" type="button">3</button>
+            <span>...</span>
+            <button class="page-item" type="button">12</button>
+            <button class="page-item" type="button">&gt;</button>
+            <select aria-label="page size">
+              <option>10 条/页</option>
+              <option>20 条/页</option>
+              <option>50 条/页</option>
+            </select>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div class="drawer-mask" id="drawerMask" aria-hidden="true">
+    <aside class="drawer" aria-label="新增退订记录">
+      <div class="drawer-head">
+        新增退订记录
+        <button class="close" type="button" id="closeDrawer" aria-label="Close">×</button>
+      </div>
+      <form class="form" id="unsubscribeForm">
+        <div class="form-row">
+          <label class="required" for="email">邮箱</label>
+          <input id="email" type="email" value="client@example.com" required>
+        </div>
+        <div class="form-row">
+          <label for="uid">UID</label>
+          <input id="uid" type="text" value="1000">
+        </div>
+        <div class="form-row">
+          <label class="required" for="scope">退订范围</label>
+          <select id="scope" required>
+            <option>营销邮件</option>
+            <option>账户提醒</option>
+            <option>全部邮件</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="template">来源模板</label>
+          <input id="template" type="text" value="A_a_Registration1_Email">
+        </div>
+        <div class="form-row">
+          <label class="required" for="status">状态</label>
+          <select id="status" required>
+            <option>已退订</option>
+            <option>待确认</option>
+            <option>已恢复</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="reason">退订原因</label>
+          <textarea id="reason">客服手动添加退订记录</textarea>
+        </div>
+      </form>
+      <div class="drawer-actions">
+        <button class="btn" type="button" id="cancelDrawer">取消</button>
+        <button class="btn primary" type="submit" form="unsubscribeForm">提交</button>
+      </div>
+    </aside>
+  </div>
+
+  <div class="toast" id="toast">退订记录已保存，表格数据已更新。</div>
+
+  <script>
+    const drawerMask = document.querySelector("#drawerMask");
+    const openDrawer = document.querySelector("#openDrawer");
+    const closeDrawer = document.querySelector("#closeDrawer");
+    const cancelDrawer = document.querySelector("#cancelDrawer");
+    const form = document.querySelector("#unsubscribeForm");
+    const toast = document.querySelector("#toast");
+    const searchInput = document.querySelector("#searchInput");
+    const recordBody = document.querySelector("#recordBody");
+
+    function setDrawer(open) {
+      drawerMask.classList.toggle("open", open);
+      drawerMask.setAttribute("aria-hidden", String(!open));
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      window.setTimeout(() => toast.classList.remove("show"), 2200);
+    }
+
+    openDrawer.addEventListener("click", () => setDrawer(true));
+    closeDrawer.addEventListener("click", () => setDrawer(false));
+    cancelDrawer.addEventListener("click", () => setDrawer(false));
+
+    drawerMask.addEventListener("click", (event) => {
+      if (event.target === drawerMask) {
+        setDrawer(false);
+      }
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const scope = document.querySelector("#scope").value;
+      const status = document.querySelector("#status").value;
+      const scopeClass = scope === "全部邮件" ? "red" : scope === "账户提醒" ? "gold" : "blue";
+      const statusClass = status === "已恢复" ? "blue" : status === "待确认" ? "gold" : "green";
+      const now = new Date();
+      const date = now.toISOString().slice(0, 10);
+      const time = now.toTimeString().slice(0, 8);
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${document.querySelector("#email").value}</td>
+        <td class="uid">${document.querySelector("#uid").value || "-"}</td>
+        <td>${document.querySelector("#template").value || "-"}</td>
+        <td><span class="tag ${scopeClass}">${scope}</span></td>
+        <td>${document.querySelector("#reason").value || "手动新增"}</td>
+        <td>${date}<br><span class="muted">${time}</span></td>
+        <td><span class="tag ${statusClass}">${status}</span></td>
+        <td><button class="action" type="button">详情</button><button class="action" type="button">恢复</button></td>
+      `;
+      recordBody.prepend(row);
+      setDrawer(false);
+      showToast("退订记录已保存，表格数据已更新。");
+    });
+
+    document.querySelector("#searchBtn").addEventListener("click", () => {
+      const keyword = searchInput.value.trim().toLowerCase();
+      let visible = 0;
+      [...recordBody.rows].forEach((row) => {
+        const match = !keyword || row.innerText.toLowerCase().includes(keyword);
+        row.hidden = !match;
+        if (match) visible += 1;
+      });
+      showToast(keyword ? `已筛选出 ${visible} 条匹配记录。` : "已显示全部退订记录。");
+    });
+
+    document.querySelector("#resetBtn").addEventListener("click", () => {
+      searchInput.value = "";
+      [...recordBody.rows].forEach((row) => {
+        row.hidden = false;
+      });
+      showToast("筛选条件已重置。");
+    });
+  </script>
+</body>
+</html>
